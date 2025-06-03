@@ -15,7 +15,7 @@ const TokenKey = (props) => {
     const { isShow, setIsShow } = props;
 
     const [form] = Form.useForm();
-    console.log(form);
+    console.log('11111',form);
     
 
     const onFinish = (values: any) => {
@@ -87,7 +87,7 @@ const TokenKey = (props) => {
             valuePropName="checked"
             wrapperCol={{
               xs: { span: 24 },
-              sm: { span: 16, offset: 8 }, // 添加偏移量实现居中
+              sm: { span: 16, offset: 9 }, // 添加偏移量实现居中
             }}
           >
               <Checkbox style={{ lineHeight: "32px" }} defaultChecked={true}>
@@ -98,7 +98,7 @@ const TokenKey = (props) => {
           <Form.Item
             wrapperCol={{
               xs: { span: 24, offset: 0 },
-              sm: { span: 16, offset: 6 }, // 添加偏移量实现居中
+              sm: { span: 16, offset: 8 }, // 添加偏移量实现居中
             }}
           >
             <Button type="primary" htmlType="submit">

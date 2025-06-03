@@ -10,9 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@yuanjing/shared": "workspace:*",
     "react-dom": "^19.1.0",
-    "scss":"workspace:*"
+    "scss": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
