@@ -1,0 +1,43 @@
+.ant-modal {
+    .ant-modal-title{
+        font-size: 20px!important;
+    }
+}
+.ant-modal.container{
+    width: 50%!important;
+}
+.container{
+    .valid-period{
+        text-align: center;
+        font-size: 16px;
+        color: #606266;
+    }
+    .controllToken{
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        font-size: 14px;
+        color: #409eff;
+        .new-token{
+            margin-right: 30px;
+        }
+        div{
+            cursor: pointer;
+        }
+    }
+    .valid-setting{
+        font-size: 16px;
+        color: #606266;
+        margin-top: 20px;
+    }
+    .cancel{
+        text-align: center;
+        .ant-btn-variant-solid{
+            background-color: #67c23a;
+    
+        }
+        .ant-btn-variant-solid:hover{
+            background-color: #95d475;
+        }
+    }
+}
