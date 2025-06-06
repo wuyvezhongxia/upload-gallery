@@ -1,16 +1,24 @@
 {
   "name": "@yuanjing/cli",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate-token": "node index.ts",
+    "generate-token:copy": "copy=true node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.4.1",
   "dependencies": {
+    "clipboardy": "^4.0.0",
+    "dotenv": "^16.5.0",
     "qiniu": "^7.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
   }
 }
