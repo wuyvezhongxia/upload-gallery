@@ -29,7 +29,7 @@ const bucket = process.env.QINIU_BUCKET;
 const domain = process.env.QINIU_DOMAIN;
 const prefix = process.env.QINIU_PREFIX;
 const scope = process.env.QINIU_SCOPE;
-const expires = process.env.QINIU_EXPIRES || '';
+const expires = process.env.QINIU_EXPIRES || "";
 
 const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
 
@@ -64,7 +64,7 @@ if (!process.env.CI) {
 if (!process.env.copy) {
   // 将生成的七牛云上传凭证写入到项目的环境变量文件中
   fs.writeFileSync(
-    path.join(__dirname, "../client/.env.local"),
+    path.join(__dirname, "../upload/.env.local"),
     `VITE_APP_UPLOAD_TOKEN=${envToken}`
   );
 }

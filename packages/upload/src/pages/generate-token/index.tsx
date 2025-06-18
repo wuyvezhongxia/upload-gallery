@@ -42,7 +42,7 @@ const GenerateToken = (props) => {
       >
         <p className="valid-period">
           有效期至：
-          <span className="time">1-1-1， 剩余时间</span>
+          <span className="time">1-1-1 剩余时间</span>
           <span className="day">天</span>
           <span className="hour">时</span>
           <span className="second">秒</span>
