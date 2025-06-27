@@ -13,18 +13,17 @@
   "packageManager": "pnpm@10.4.1",
   "dependencies": {
     "antd": "^5.25.4",
+    "dayjs": "^1.11.13",
     "lodash": "^4.17.21",
     "react": "^19.1.0",
-    "scss": "^1.89.1"
+    "sass": "^1.89.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.4.1",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
-  "pnpm": {
-    "overrides": {
-      "scss": "link:C:\\Users\\May\\AppData\\Local\\pnpm\\global\\5\\node_modules\\scss"
-    }
-  }
+  "workspaces": [
+    "packages/*"
+  ]
 }

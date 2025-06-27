@@ -1,11 +1,5 @@
-import SparkMD5 from 'spark-md5'
 
-// MD5 哈希计算
-export function getMd5Hash(str: string):string{
-    return SparkMD5.hash(str)
-}
-
-// HMAC-SHA1密钥生成 ,为 HMAC 签名生成密钥（如 API 认证）
+// HMAC-SHA256密钥生成 ,为 HMAC 签名生成密钥（如 API 认证）
 export const computedCryptoKeySHA256 =(secret:string)=>{
   // 将字符串转换为 UTF-8 编码的字节数组
   const encoder = new TextEncoder();
@@ -30,7 +24,6 @@ export function arrayBufferToBase64(buffer:ArrayBuffer) {
     return btoa(base64String)
 }
 
-// 
 export function unit8ArrayToHex(unit8Array:Uint8Array):string {
     return Array.from(unit8Array)
         .map(byte => byte.toString(16).padStart(2, '0'))
@@ -54,7 +47,7 @@ export function urlSafeToBase64(v:string){
     return v.replace(/-/g, '+').replace(/_/g, '/');
 }
 
-export function urlsafeBase64Encode(str:string){
+export function urlSafeBase64Encode(str:string){
    const base64 = btoa(str);
    return base64ToUrlSafe(base64);
 }
