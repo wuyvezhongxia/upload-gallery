@@ -4,7 +4,7 @@ import {
   computedHMAC_SHA256,
   urlSafeBase64Encode,
 } from "./crypto";
-
+import { getFileMd5Hash } from './stringUtil';
 import type { QiNiuConfig } from '../store/modules/configStore';
 
 // 上传进度变化时,注入自己的逻辑

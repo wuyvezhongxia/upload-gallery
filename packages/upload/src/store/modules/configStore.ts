@@ -1,5 +1,4 @@
 import {createSlice} from '@reduxjs/toolkit';
-
 interface BaseConfig{
     token:string,
     scope:string,
@@ -38,5 +37,7 @@ const configQiniuStore = createSlice({
        } 
     }
 })
+
+
 export const {parseToken} = configQiniuStore.actions;
 export default configQiniuStore.reducer;

@@ -8,7 +8,7 @@ import {
   message,
 } from "antd";
 import { useEffect, useState } from "react";
-
+import { generateUploadToken } from "../../../utils/qiniu";
 
 // 定义表单值的类型
 type FormValues = {
@@ -23,6 +23,11 @@ type FormValues = {
   save: boolean;
 };
 
+type TokenKeyProps = {
+  isShow: boolean;
+  setIsShow: (value: boolean) => void;
+};
+
 const formItemLayout = {
   labelCol: {
     xs: { span: 24 },
@@ -34,11 +39,11 @@ const formItemLayout = {
   },
 };
   
-const TokenKey = (props) => {
+const TokenKey = (props:TokenKeyProps) => {
     const { isShow, setIsShow } = props;
 
     const [form] = Form.useForm();
-    const [formValue, setFormValue] = useState({
+    const [formValue, setFormValue] = useState<FormValues>({
       "storage-service": "七牛云",
       accessKey: "",
       secretKey: "",
@@ -60,17 +65,24 @@ const TokenKey = (props) => {
     }
     const onChange = (changedValues, allValues) => {
       setFormValue(allValues);
-      // setFormValue((prev) => ({ ...prev, ...allValues }));
       console.log(formValue);
     };
 
-    const onFinish = (values: object) => {
-      // 获取所有的字段名
-      console.log(111);
-      
+    const onFinish = async (values: FormValues) => {
       console.log('Received values of form: ', values);
+      const token = await generateUploadToken({
+        accessKey: values.accessKey,
+        secretKey: values.secretKey,
+        bucket: values.bucket,
+        prefix: values.formPrefix,
+        domain: values.domain,
+        scope: values.scope,
+        expires: values.dateExpired ? values.dateExpired.valueOf() : Date.now(),
+      });
+
+      console.log(token);
+      
     };
- 
 
   return (
     <div>
@@ -120,7 +132,7 @@ const TokenKey = (props) => {
             rules={[
               {
                 required: true,
-                message: "请输入七牛云 Access Key",
+                message: "请输入七牛云 Secret Key",
               },
               {
                 validator: validateSecretKey,
@@ -153,12 +165,12 @@ const TokenKey = (props) => {
                 message: "请输入访问域名",
               },
               {
-                pattern: /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(\/\S*)?$/i,
-                message: "请输入有效的域名格式 (如: https://example.com)",
+                pattern: /^(http?:\/\/)?([\w.-]+)\.([a-z]{2,})(\/\S*)?$/i,
+                message: "请输入有效的域名格式 (如: http://example.com)",
               },
             ]}
           >
-            <Input placeholder="访问域名： https://example.com" />
+            <Input placeholder="访问域名： http://example.com" />
           </Form.Item>
 
           <Form.Item
@@ -207,6 +219,8 @@ const TokenKey = (props) => {
             <DatePicker
               style={{ width: "80%" }}
               placeholder="选择 token 过期时间"
+              value={formValue.dateExpired}
+              onChange={(date) => form.setFieldsValue({ dateExpired: date })}
             />
           </Form.Item>
 
@@ -215,7 +229,7 @@ const TokenKey = (props) => {
             valuePropName="checked"
             wrapperCol={{
               xs: { span: 24 },
-              sm: { span: 16, offset: 9 }, // 添加偏移量实现居中
+              sm: { span: 16, offset: 9 },
             }}
           >
             <Checkbox style={{ lineHeight: "32px" }} defaultChecked={true}>
@@ -226,7 +240,7 @@ const TokenKey = (props) => {
           <Form.Item
             wrapperCol={{
               xs: { span: 24, offset: 0 },
-              sm: { span: 16, offset: 8 }, // 添加偏移量实现居中
+              sm: { span: 16, offset: 8 }, 
             }}
           >
             <Button type="primary" htmlType="submit">

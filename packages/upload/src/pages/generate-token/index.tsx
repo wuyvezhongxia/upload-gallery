@@ -26,6 +26,7 @@ const GenerateToken = (props) => {
   }
   const showTokenKey = ()=>{
     setShowKey(true)
+    
   }
 
   return (

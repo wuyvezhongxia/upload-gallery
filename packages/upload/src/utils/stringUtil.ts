@@ -46,7 +46,7 @@ export function getFileMd5Hash(file: File) {
     }
 
     fileReader.onload = function (e) {
-      spark.append(e?.target?.result);
+      spark.append(e?.target?.result as ArrayBuffer);
       currentChunk += 1;
 
       if (currentChunk < chunks) {
