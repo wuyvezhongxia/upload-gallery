@@ -12,12 +12,12 @@ export interface ImageItem{
 const imageStore = createSlice({
   name: "imageStore",
   initialState: {
-    success:(JSON.parse(localStorage.getItem('upload-image')||'[]') || []) as ImageItem[]
+    imgList:(JSON.parse(localStorage.getItem('upload-image')||'[]') || []) as ImageItem[]
   },
   reducers: {
     addImage:(state,action)=>{
-        state.success.unshift(action.payload)
-        localStorage.setItem('upload-image',JSON.stringify(state.success,(key,value)=>(key==='file'?undefined:value)))
+        state.imgList.unshift(action.payload)
+        localStorage.setItem('upload-image',JSON.stringify(state.imgList,(key,value)=>(key==='file'?undefined:value)))
     }
   },
 });

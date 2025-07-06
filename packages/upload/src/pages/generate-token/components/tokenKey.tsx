@@ -5,11 +5,13 @@ import {
   Radio,
   Checkbox,
   DatePicker,
-  message,
+  message
 } from "antd";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { generateUploadToken } from "../../../utils/qiniu";
-
+import { parseToken } from "../../../store/modules/configStore";
+import { useDispatch } from "react-redux";
+import dayjs from "dayjs";
 // 定义表单值的类型
 type FormValues = {
   "storage-service": string;
@@ -21,6 +23,7 @@ type FormValues = {
   scope: string;
   dateExpired: Date | null;
   save: boolean;
+  link?: string | undefined
 };
 
 type TokenKeyProps = {
@@ -40,50 +43,67 @@ const formItemLayout = {
 };
   
 const TokenKey = (props:TokenKeyProps) => {
+    const dispatch = useDispatch()
     const { isShow, setIsShow } = props;
-
     const [form] = Form.useForm();
-    const [formValue, setFormValue] = useState<FormValues>({
-      "storage-service": "七牛云",
-      accessKey: "",
-      secretKey: "",
-      bucket: "",
-      domain: "",
-      formPrefix: "",
-      save: true,
-      scope: "default",
-      dateExpired: null
-    });
-
-    const validateSecretKey = (_, value:string)=>{
-      const accessKey = form.getFieldValue('accessKey');
-      if(value && value === accessKey){
-        console.log(value);
-        return Promise.reject(new Error("Access Key 和 Secret Key 不能相同"));
+    const [formValue,setFormValue]=useState(()=>{
+      const savedValues = localStorage.getItem('config');
+      if (savedValues) {
+        const parsed = JSON.parse(savedValues);
+        return {
+          ...parsed,
+          dateExpired: parsed.dateExpired ? dayjs(parsed.dateExpired) : null,
+        };
       }
-      return Promise.resolve();
-    }
-    const onChange = (changedValues, allValues) => {
+      return {
+            "storage-service": "七牛云",
+            accessKey: "",
+            secretKey: "",
+            bucket: "",
+            domain: "",
+            formPrefix: "",
+            save: true,
+            scope: "default",
+            dateExpired: null,
+          };
+    })
+
+    const onChange = (changedValues:FormValues, allValues:FormValues) => {
       setFormValue(allValues);
       console.log(formValue);
     };
 
     const onFinish = async (values: FormValues) => {
-      console.log('Received values of form: ', values);
-      const token = await generateUploadToken({
-        accessKey: values.accessKey,
-        secretKey: values.secretKey,
-        bucket: values.bucket,
-        prefix: values.formPrefix,
-        domain: values.domain,
-        scope: values.scope,
-        expires: values.dateExpired ? values.dateExpired.valueOf() : Date.now(),
-      });
-
-      console.log(token);
-      
+      try{
+        const token = await generateUploadToken({
+          accessKey: values.accessKey,
+          secretKey: values.secretKey,
+          bucket: values.bucket,
+          prefix: values.formPrefix,
+          domain: values.domain,
+          scope: values.scope,
+          expires: values.dateExpired ? dayjs(values.dateExpired).valueOf() : Date.now(),
+        });
+        if(!token){
+          message.error('生成token失败')
+        };
+        dispatch(parseToken(token))
+        setFormValue(values)
+        localStorage.setItem('config',JSON.stringify(values))
+        message.success('token生成')
+      }catch(error){
+        message.error(`操作失败:${error}`)
+      }
     };
-
+    
+    const validateSecretKey = (_:object, value: string) => {
+      const accessKey = form.getFieldValue("accessKey");
+      if (value && value === accessKey) {
+        console.log(value);
+        return Promise.reject(new Error("Access Key 和 Secret Key 不能相同"));
+      }
+      return Promise.resolve();
+    };
   return (
     <div>
       {isShow && (
@@ -92,16 +112,7 @@ const TokenKey = (props:TokenKeyProps) => {
           form={form}
           name="register"
           onFinish={onFinish}
-          initialValues={{
-            accessKey: "",
-            secretKey: "",
-            bucket: "",
-            domain: "",
-            formPrefix: "",
-            save: true,
-            scope: "",
-            dateExpired: null,
-          }}
+          initialValues={formValue}
           style={{ width: "100%", marginTop: "25px" }}
           scrollToFirstError={true}
           colon={false}
@@ -220,7 +231,9 @@ const TokenKey = (props:TokenKeyProps) => {
               style={{ width: "80%" }}
               placeholder="选择 token 过期时间"
               value={formValue.dateExpired}
-              onChange={(date) => form.setFieldsValue({ dateExpired: date })}
+              onChange={(date) => {
+                form.setFieldsValue({ dateExpired: date });
+              }}
             />
           </Form.Item>
 
@@ -240,7 +253,7 @@ const TokenKey = (props:TokenKeyProps) => {
           <Form.Item
             wrapperCol={{
               xs: { span: 24, offset: 0 },
-              sm: { span: 16, offset: 8 }, 
+              sm: { span: 16, offset: 8 },
             }}
           >
             <Button type="primary" htmlType="submit">

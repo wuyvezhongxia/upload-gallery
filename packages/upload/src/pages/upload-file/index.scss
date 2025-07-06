@@ -25,5 +25,10 @@
         text-align: center;
         line-height: 20px;
         outline: none;
+        font-weight: 500;
+    }
+    &.paste-active::placeholder{
+        color: #67c23a;
     }
 }
+

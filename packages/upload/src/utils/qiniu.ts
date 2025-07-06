@@ -33,7 +33,11 @@ async function uploadFile(file:File,qiniuOps:QiNiuConfig,options?:{
       }, 100);
       return;
     }
-
+    console.log('111111111111111111111111111',token,typeof token);
+    console.log('ssssssssssssssssssssssssss',file, putExtra.fname, token, putExtra, config);
+    console.log(putExtra.fname,'3333333333333333333333');
+    
+  
     const observable = qiniu.upload(
       file,
       putExtra.fname,
@@ -41,6 +45,9 @@ async function uploadFile(file:File,qiniuOps:QiNiuConfig,options?:{
       putExtra,
       config
     );
+
+    console.log('aaaaaaaaaaaaaaaaaa',observable);
+    
 
     observable.subscribe({
       next(res) {
@@ -87,7 +94,9 @@ async function generateUploadToken(ops:{
 }) {
     const {accessKey,secretKey,bucket,expires,domain,prefix,scope} = ops
     const token = await generateQiniuToken(accessKey,secretKey,bucket,Math.round(expires/1000))
-    return urlSafeBase64Encode(
+    console.log('mmmmmmmmmmmmmmmmmmmmmmmmmmmmmm',token);
+    
+    return btoa(
       JSON.stringify({
         token,
         date: expires,

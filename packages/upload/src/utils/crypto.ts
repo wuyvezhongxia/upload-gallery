@@ -1,6 +1,6 @@
 
 // HMAC-SHA256密钥生成 ,为 HMAC 签名生成密钥（如 API 认证）
-export const computedCryptoKeySHA256 =(secret:string)=>{
+export const computedCryptoKeySHA1 =(secret:string)=>{
   // 将字符串转换为 UTF-8 编码的字节数组
   const encoder = new TextEncoder();
   const keyMaterial = encoder.encode(secret);
@@ -8,9 +8,9 @@ export const computedCryptoKeySHA256 =(secret:string)=>{
   return window.crypto.subtle.importKey(
     "raw",
     keyMaterial,
-    { name: "HMAC", hash: { name: "SHA-256" } },
+    { name: "HMAC", hash: { name: "SHA-1" } },
     false,
-    ["sign",'verify'] //密钥用途：仅用于签名
+    ["sign",'verify'] 
   );
 }
 
@@ -32,7 +32,7 @@ export function unit8ArrayToHex(unit8Array:Uint8Array):string {
 
 export async function computedHMAC_SHA256(secret:string,value:string,resultType:'hex'|'base64'='base64'){
     const encoder = new TextEncoder();
-    const key = await computedCryptoKeySHA256(secret)
+    const key = await computedCryptoKeySHA1(secret)
     const data = encoder.encode(value)
     const hashBuffer = await window.crypto.subtle.sign({name:'HMAC',hash:'SHA-256'},key,data)
     return resultType === 'base64'?arrayBufferToBase64(hashBuffer):unit8ArrayToHex(new Uint8Array(hashBuffer))

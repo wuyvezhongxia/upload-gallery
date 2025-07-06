@@ -7,14 +7,18 @@ import {
 import './index.scss'
 import { useState } from "react";
 import NewToken from './components/newToken'
-import TokenKey from "./components/tonkenKey";
-const GenerateToken = (props) => {
+import TokenKey from "./components/tokenKey"
+
+type GenerateTokenProps = {
+  show: boolean;
+  setShow: (value:boolean) => void
+}
+
+const GenerateToken = (props:GenerateTokenProps) => {
   const {show,setShow} = props
 
-  // 控制更新token组件是否显示
   const [isShow,setIsShow] = useState(false)
 
-  // 控制密钥是否显示
   const [showKey, setShowKey] = useState(false)
 
   const handleCancel = ()=>{
