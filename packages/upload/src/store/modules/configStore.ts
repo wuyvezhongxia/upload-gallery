@@ -19,7 +19,9 @@ export interface QiNiuConfig extends BaseConfig{
 const configQiniuStore = createSlice({
     name:'config',
     initialState:{
-        qiniu:{
+        qiniu:localStorage.getItem('qiniu-config')
+        ?JSON.parse(localStorage.getItem('qiniu-config')||'{}')
+        :{
             prefix:'image',
             scope:'default',
             token:'',
@@ -35,33 +37,22 @@ const configQiniuStore = createSlice({
     reducers:{
        parseToken:(state,action)=>{
             try{
-                console.log('111111111',action.payload);
-                
                 const config = JSON.parse(atob(action.payload || import.meta.env.VITE_APP_UPLOAD_TOKEN))
-                console.log('222222222222',config);
-                
                 state.qiniu = { ...state.qiniu, ...config};
-                // state.qiniu.token = action.payload
-                
-                console.log('33333333333333333333',state.qiniu);
-                
-                // state.qiniu.token = action.payload
                 state.parsedToken = state.qiniu
-                
+                localStorage.setItem('qiniu-config', JSON.stringify(state.qiniu))
                 if (action.payload) {
                     localStorage.setItem('upload-token',action.payload)
                 }
-
-                console.log('token:', JSON.stringify(state.qiniu.token), typeof state.qiniu.token, state.qiniu.token.length);
             }
-            catch(err:any){
+            catch(error){
                 if(state.warningTimer){
                     return
                 }
                 state.warningTimer = setTimeout(()=>{
                     state.warningTimer = null
                 },3000)
-                message.error("token 不正确，请点击右上角 🔑 重新设置");
+                message.error("token 不正确，请点击右上角 🔑 重新设置",error);
             }
        
         }

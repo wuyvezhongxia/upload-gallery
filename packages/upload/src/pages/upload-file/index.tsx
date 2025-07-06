@@ -5,6 +5,7 @@ import { useState,useEffect,useRef } from "react";
 import { addImage } from "../../store/modules/imageStore";
 import { uploadFile } from "../../utils/qiniu";
 import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "../../store";
 
 
 const { Dragger } = Upload;
@@ -21,8 +22,8 @@ interface UploadableFile {
 const UploadFile = () => {
   const [isCopy, setIsCopy] = useState(false);
   const dispatch = useDispatch();
-  const {qiniu} = useSelector((state) => state.config);
-  const { imgList } = useSelector((state) => state.image);
+  const {qiniu} = useSelector((state:RootState) => state.config);
+  const { imgList } = useSelector((state:RootState) => state.image);
   const [fileList,setFileList] = useState<UploadableFile[]>([])
   const pasteAreaRef= useRef<HTMLTextAreaElement>(null)
 

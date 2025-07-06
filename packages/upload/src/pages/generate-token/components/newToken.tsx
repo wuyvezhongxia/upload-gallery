@@ -1,14 +1,37 @@
 import { Modal} from "antd"
-
-const NewToken= (props) => {
+import { parseToken } from "../../../store/modules/configStore";
+import { useDispatch} from "react-redux";
+import { useEffect, useState ,useRef} from "react";
+import type { ChangeEvent} from "react";
+type newTokenProps = {
+  isShow: boolean;
+  setIsShow: (value: boolean) => void;
+};
+const NewToken= (props:newTokenProps) => {
   const { isShow, setIsShow } = props;
-  console.log(isShow);
+  const [inputValue,setInputValue] = useState('')
+  const dispatch = useDispatch()
+  const inputRef = useRef<HTMLInputElement>(null)
+  
   const onCancel = () => {
     setIsShow(false);
   };
   const onOk = () => {
+    if(inputValue){
+      dispatch(parseToken(inputValue))
+    }
     setIsShow(false);
+    setInputValue('')
   };
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+  };
+  useEffect(()=>{
+    if(isShow){
+      inputRef.current?.focus()
+    }
+  })
   return (
     <div>
       <Modal
@@ -32,10 +55,14 @@ const NewToken= (props) => {
             fontSize:'16px',
             borderRadius:'5px'
           }}
+          value={inputValue}
           type="text"
+          onChange={handleChange}
+          ref={inputRef}
         />
       </Modal>
     </div>
   );
 };
 export default NewToken;
+  
