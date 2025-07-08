@@ -6,6 +6,7 @@ import { addImage } from "../../store/modules/imageStore";
 import { uploadFile } from "../../utils/qiniu";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../store";
+import { compressImage } from "../../utils/image";
 
 
 const { Dragger } = Upload;
@@ -28,10 +29,9 @@ const UploadFile = () => {
   const pasteAreaRef= useRef<HTMLTextAreaElement>(null)
 
   useEffect(()=>{
+    console.log('filefilefilefile',fileList);
     const uploadQueue = fileList.filter(file=>file.status === 'ready')
-
     if(uploadQueue.length === 0) return 
-
     const upload = async(file:UploadableFile)=>{
       setFileList((prev)=>
         prev.map(f=>f.uid === file.uid?{...f,status:'uploading'}:f)
@@ -43,12 +43,9 @@ const UploadFile = () => {
           }
         })
         console.log('1111111111111',url);
-        
         message.success(`${file.name}上传成功`)
         dispatch(addImage(url))
-
         setFileList(prev=>prev.map(f=>f.uid===file.uid?{...f,status:'success'}:f))
-
         setTimeout(()=>{
           setFileList((prev)=>prev.filter(f=>f.uid !== file.uid))
         })
@@ -63,72 +60,85 @@ const UploadFile = () => {
   },[fileList])
 
   // 处理拖拽上传
-  const handleBeforeUpload= (file:File)=>{
+  const handleBeforeUpload = async (file:File)=>{
+    console.log('ffffffffffffffffffff',file);
     const isImage = file.type.startsWith("image/")
     if(!isImage){
       message.error('只能上传图片')
       return false
     }
-
+    message.loading("正在压缩图片...", 0);
+    
+    const compressFile = await compressImage(file,{
+      quality:80,
+      width:1200,
+      noCompressIfLarger:true
+    })
+    message.destroy();
     setFileList((prev) => [
       ...prev,
       {
         uid: `drag-${Date.now()}-${Math.random()}`,
-        raw:file,
-        name:file.name,
+        raw:compressFile,
+        name:compressFile.name,
         status:'ready',
         percent:0
       },
     ]);
     return false;
   }
-    const copyFile = () => {
-      setIsCopy(true);
-    };
-    // 处理粘贴事件
-    useEffect(()=>{
-      const handlePaste = (e:ClipboardEvent)=>{
-        
-        e.preventDefault()
-        console.log("eeeeeeeeeeeeeeee", e);
-        const items = e.clipboardData?.items;
-        console.log(items)
-        if(!items) return;
-        let hasImage = false;
-        const newFiles: UploadableFile[] = []
-        for(const item of Array.from(items)){
-          if(item.kind === 'file' && item.type.startsWith('image')){
-            const file = item.getAsFile()
-            if(file){
-              hasImage = true
-              newFiles.push({
-                uid: `paste-${Date.now()}-${Math.random()}`,
-                raw: file,
-                name: file.name || `pasted-image-${Date.now()}`,
-                status: "ready",
-                percent: 0,
-              });
-            }
+  const copyFile = () => {
+    setIsCopy(true);
+  };
+  // 处理粘贴事件
+  useEffect(()=>{
+    const handlePaste = async (e:ClipboardEvent)=>{
+      e.preventDefault()
+      console.log("eeeeeeeeeeeeeeee", e);
+      const items = e.clipboardData?.items;
+      console.log(items)
+      if(!items) return;
+      let hasImage = false;
+      const newFiles: UploadableFile[] = []
+      for(const item of Array.from(items)){
+        if(item.kind === 'file' && item.type.startsWith('image')){
+          const file = item.getAsFile()
+          if(file){
+            hasImage = true
+            message.loading("正在压缩图片...", 0)
+            const compressFile = await compressImage(file, {
+              quality: 80,
+              width: 1200,
+              noCompressIfLarger: true,
+            });
+            message.destroy();
+            newFiles.push({
+              uid: `paste-${Date.now()}-${Math.random()}`,
+              raw: compressFile,
+              name: compressFile.name || `pasted-image-${Date.now()}`,
+              status: "ready",
+              percent: 0,
+            });
           }
-          
-        }
-        if (hasImage) {
-          setFileList((prev) => [...prev, ...newFiles]);
-          setIsCopy(false);
-        } else {
-          message.error("剪贴板中没有图片");
         }
       }
-      const el = pasteAreaRef.current;
+      if (hasImage) {
+        setFileList((prev) => [...prev, ...newFiles]);
+        setIsCopy(false);
+      } else {
+        message.error("剪贴板中没有图片");
+      }
+    }
+    const el = pasteAreaRef.current;
+    if (el) {
+      el.addEventListener("paste", handlePaste);
+    }
+    return () => {
       if (el) {
-        el.addEventListener("paste", handlePaste);
+        el.removeEventListener("paste", handlePaste);
       }
-      return () => {
-        if (el) {
-          el.removeEventListener("paste", handlePaste);
-        }
-      };
-    },[])
+    };
+  },[])
   return (
     <div className="upload-container">
       <textarea
@@ -144,7 +154,7 @@ const UploadFile = () => {
         readOnly
       />
 
-      <Dragger beforeUpload={handleBeforeUpload} onChange={() => {}}>
+      <Dragger beforeUpload={handleBeforeUpload} showUploadList={false}>
         <p className="ant-upload-drag-icon">
           <CloudUploadOutlined />
         </p>
