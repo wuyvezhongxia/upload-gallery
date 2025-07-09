@@ -96,7 +96,7 @@ async function compressJPGImage(file:File,method:string,ops: CompressOptions = {
 
 function compressImageByCanvas(file:File,options:CompressOptions={}){
     const  {quality = 80} = options
-    let {width,height} = options
+    let {width,height} = options   
     let _resolve: any
     const promise = new Promise<File>((resolve)=>{
         _resolve = resolve

@@ -24,7 +24,6 @@ const UploadFile = () => {
   const [isCopy, setIsCopy] = useState(false);
   const dispatch = useDispatch();
   const {qiniu} = useSelector((state:RootState) => state.config);
-  const { imgList } = useSelector((state:RootState) => state.image);
   const [fileList,setFileList] = useState<UploadableFile[]>([])
   const pasteAreaRef= useRef<HTMLTextAreaElement>(null)
 
@@ -33,6 +32,8 @@ const UploadFile = () => {
     const uploadQueue = fileList.filter(file=>file.status === 'ready')
     if(uploadQueue.length === 0) return 
     const upload = async(file:UploadableFile)=>{
+      console.log('eeeeeeeeeeeeeeeeeee',file);
+      
       setFileList((prev)=>
         prev.map(f=>f.uid === file.uid?{...f,status:'uploading'}:f)
       );
@@ -44,7 +45,13 @@ const UploadFile = () => {
         })
         console.log('1111111111111',url);
         message.success(`${file.name}上传成功`)
-        dispatch(addImage(url))
+        dispatch(addImage({
+          url,
+          name:file.name || 'image',
+          size:file.raw.size || 0,
+          originSize:file.raw.size,
+          date: Date.now()
+        }))
         setFileList(prev=>prev.map(f=>f.uid===file.uid?{...f,status:'success'}:f))
         setTimeout(()=>{
           setFileList((prev)=>prev.filter(f=>f.uid !== file.uid))
@@ -124,7 +131,6 @@ const UploadFile = () => {
       }
       if (hasImage) {
         setFileList((prev) => [...prev, ...newFiles]);
-        setIsCopy(false);
       } else {
         message.error("剪贴板中没有图片");
       }

@@ -3,7 +3,6 @@ import { createSlice } from "@reduxjs/toolkit";
 export interface ImageItem{
     url:string,
     name:string,
-    file?:File,
     date?:number,
     size:number,
     originSize?:number

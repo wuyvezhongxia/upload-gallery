@@ -1,14 +1,16 @@
-import './index.scss'
 import { Button } from 'antd'
 import GenerateToken from '../generate-token/index'
 import {useState} from 'react'
+import logo from '@/assets/logo.svg'
+import "./index.scss";
+
 const Header = ()=>{
     const [show,setShow] = useState(false) 
     return (
       <>
         <div className="header">
           <div className="left">
-            <img src="../../assets/logo.svg" alt="" />
+            <img src={logo} alt="" />
             <h3>源境静态资源管理平台</h3>
           </div>
           <Button className="right iconfont" onClick={() => setShow(true)}>
