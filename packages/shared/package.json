@@ -2,12 +2,15 @@
   "name": "@yuanjing/shared",
   "version": "1.0.0",
   "description": "",
-  "main": "./index.ts",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.4.1"
+  "packageManager": "pnpm@10.4.1",
+  "dependencies": {
+    "clipboard-copy": "^4.0.1"
+  }
 }

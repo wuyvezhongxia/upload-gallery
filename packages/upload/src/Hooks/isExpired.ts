@@ -1,7 +1,7 @@
-import { UseSelector } from "react-redux";
-
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 export function useIsExpired() {
-  const { qiniu } = UseSelector((state: RootOptions) => state.config);
+  const { qiniu } = useSelector((state: RootState) => state.config);
   const isExpired = qiniu.date <= Date.now();
   return isExpired;
 }

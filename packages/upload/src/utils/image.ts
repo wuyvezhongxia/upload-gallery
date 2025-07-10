@@ -72,7 +72,7 @@ function resizeImageData(imageData: Uint8Array[], originalWidth: number, origina
 async function fallbackPngCompression(file: File, ops: CompressOptions): Promise<File> {
     try {
         // 使用Canvas方法作为备用方案，但保持PNG格式
-        const { quality = 80, width, height } = ops
+        const { width, height } = ops
         
         return new Promise<File>((resolve, reject) => {
             const img = new Image()
@@ -137,18 +137,6 @@ const signatureEqual=(source:ArrayBuffer,signature:number[])=>{
         }
     }
     return true
-}
-
-// 将quality转换为特殊深度值
-function convertQualityToBit(quality:number):number{
-    let bit = 0
-    if(quality > 100 || quality < 0){
-        bit = 0
-    }
-    else{
-        bit = !quality ? 0 : quality * 256 * 0.01
-    }
-    return bit
 }
 
 async function compressJPGImage(file:File,method:string,ops: CompressOptions = {}){

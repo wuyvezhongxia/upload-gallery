@@ -1,6 +1,18 @@
 import SparkMD5 from 'spark-md5'
 import { message } from 'antd'
 import dayjs from 'dayjs'
+import copy from "clipboard-copy";
+
+export const copyRes = (text:string,msg = '结果已成功复制到剪贴板')=>{
+  copy(text).then(()=>{
+    if(msg){
+      message.success(msg)
+    }
+  }).catch((err)=>{
+    message.error(err?.message || '无粘贴板权限')
+    message.warning('不支持自动复制，请手动选择复制')
+  })
+}
 
 // base64转换
 export function base64(s: string){

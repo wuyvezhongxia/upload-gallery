@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface ImageItem{
+    id:number,
     url:string,
     name:string,
     date?:number,

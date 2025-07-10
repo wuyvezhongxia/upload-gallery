@@ -1,11 +1,13 @@
-import { Button, Pagination,ConfigProvider } from "antd";
+import { Button, Pagination, ConfigProvider, Modal } from "antd";
 import type { PaginationProps } from "antd";
 import "./index.scss";
-import zhCN from "antd/locale/zh_CN"; 
-import { useSelector} from "react-redux";
+import zhCN from "antd/locale/zh_CN";
+import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { useEffect } from "react";
-import { message } from "antd";
+import { calculateCompressionPercentage, formatSize } from "@/utils/transform";
+import { fomatData, copyRes } from "@/utils/stringUtil";
+import type { ImageItem } from "@/store/modules/imageStore";
+import { useState } from "react";
 
 const onShowSizeChange: PaginationProps["onShowSizeChange"] = (
   current,
@@ -16,17 +18,22 @@ const onShowSizeChange: PaginationProps["onShowSizeChange"] = (
 
 const FileList = () => {
   const { imgList } = useSelector((state: RootState) => state.image);
-  
-  const preview = ()=>{
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImg, setCurrentImg] = useState<ImageItem | null>(null);
 
-  }
+  const preview = (item: ImageItem) => {
+    setIsModalOpen(true);
+    setCurrentImg(item);
+  };
 
-  const copyUrl = (url)=>{
+  const copyUrl = async (url: string) => {
+      copyRes(url)
+  };
 
-  }
-  const copyMd = (url)=>{
-
-  }
+  const copyMd = async (url: string, name?: string) => {
+    const markdownText = `![${name || "image"}](${url})`;
+    copyRes(markdownText, "Markdown格式已复制");
+  };
 
   return (
     <ConfigProvider locale={zhCN}>
@@ -38,7 +45,7 @@ const FileList = () => {
           </div>
         ) : (
           <ul className="file-list">
-            {imgList.map((item,index) => (
+            {imgList.map((item, index) => (
               <li key={index}>
                 <span className="left">
                   <a href={item.url} target="_blank" rel="noopener noreferrer">
@@ -46,10 +53,19 @@ const FileList = () => {
                   </a>
                 </span>
                 <span className="right">
-                  <Button title="文件大小">120B</Button>
-                  <Button onClick={preview} title="预览图片">预览</Button>
-                  <Button onClick={()=>copyUrl(item.url)} title="复制链接">链接</Button>
-                  <Button onClick={()=>copyMd(item.url)} title="复制Markdown格式">MD</Button>
+                  <Button title="文件大小">{formatSize(item.size)}</Button>
+                  <Button onClick={() => preview(item)} title="查看图片信息">
+                    查看
+                  </Button>
+                  <Button onClick={() => copyUrl(item.url)} title="复制链接">
+                    链接
+                  </Button>
+                  <Button
+                    onClick={() => copyMd(item.url, item.name)}
+                    title="复制Markdown格式"
+                  >
+                    MD
+                  </Button>
                 </span>
               </li>
             ))}
@@ -57,7 +73,7 @@ const FileList = () => {
         )}
         <div className="pagination">
           <Pagination
-            total={5}
+            total={imgList.length}
             showTotal={(total) => `共 ${total} 条`}
             onShowSizeChange={onShowSizeChange}
             defaultPageSize={20}
@@ -66,8 +82,72 @@ const FileList = () => {
             pageSizeOptions={[20, 50, 100, 200]}
           />
         </div>
+        
+        <Modal
+          title="图片信息"
+          open={isModalOpen}
+          onOk={() => setIsModalOpen(false)}
+          onCancel={() => setIsModalOpen(false)}
+          width={600}
+          footer={[
+            <Button key="copy-url" onClick={() => currentImg && copyUrl(currentImg.url)}>
+              复制链接
+            </Button>,
+            <Button key="copy-md" onClick={() => currentImg && copyMd(currentImg.url, currentImg.name)}>
+              复制MD
+            </Button>,
+            <Button key="close" type="primary" onClick={() => setIsModalOpen(false)}>
+              关闭
+            </Button>,
+          ]}
+        >
+          {currentImg && (
+            <div className="preview-info">
+              <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                <img 
+                  src={currentImg.url} 
+                  alt={currentImg.name}
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: '300px', 
+                    objectFit: 'contain',
+                    border: '1px solid #d9d9d9',
+                    borderRadius: '6px'
+                  }}
+                />
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                <li>图片名：{currentImg.name}</li>
+                <li>链接:
+                  <a 
+                    target="_blank" 
+                    href={currentImg.url}
+                    rel="noopener noreferrer"
+                    style={{ marginLeft: '8px', color: '#1890ff' }}
+                  >
+                    点击查看原图
+                  </a>
+                </li>
+                {currentImg.date && <li>
+                  上传时间{fomatData(currentImg.date, 'YYYY-MM-DD HH:mm:ss')}
+                </li>}
+                <li>
+                  文件大小：{formatSize(currentImg.size)}
+                </li>
+                {currentImg.originSize && <li style={{ marginBottom: '8px' }}>
+                  压缩前大小：{formatSize(currentImg.originSize)}
+                </li>}
+                {currentImg.originSize && <li>
+                  压缩率：
+                  {calculateCompressionPercentage(currentImg.originSize, currentImg.size)}%
+                </li>}
+              </ul>
+            </div>
+          )}
+        </Modal>
       </div>
     </ConfigProvider>
   );
-}
+};
+
 export default FileList;

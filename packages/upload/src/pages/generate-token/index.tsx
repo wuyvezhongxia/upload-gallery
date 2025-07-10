@@ -9,9 +9,9 @@ import './index.scss'
 import { useEffect, useState } from "react";
 import NewToken from './components/newToken'
 import TokenKey from "./components/tokenKey"
-import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store";
+import dayjs from "dayjs";
 
 type GenerateTokenProps = {
   show: boolean;

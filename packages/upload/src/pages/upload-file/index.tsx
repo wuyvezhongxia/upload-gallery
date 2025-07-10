@@ -7,6 +7,8 @@ import { uploadFile } from "../../utils/qiniu";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../store";
 import { compressImage } from "../../utils/image";
+import { v4 as uuidv4} from 'uuid'
+import { useIsExpired } from "@/Hooks/isExpired";
 
 
 const { Dragger } = Upload;
@@ -26,14 +28,14 @@ const UploadFile = () => {
   const {qiniu} = useSelector((state:RootState) => state.config);
   const [fileList,setFileList] = useState<UploadableFile[]>([])
   const pasteAreaRef= useRef<HTMLTextAreaElement>(null)
+  const isExpired = useIsExpired();
 
   useEffect(()=>{
     console.log('filefilefilefile',fileList);
     const uploadQueue = fileList.filter(file=>file.status === 'ready')
-    if(uploadQueue.length === 0) return 
+    if(uploadQueue.length === 0) return
+    
     const upload = async(file:UploadableFile)=>{
-      console.log('eeeeeeeeeeeeeeeeeee',file);
-      
       setFileList((prev)=>
         prev.map(f=>f.uid === file.uid?{...f,status:'uploading'}:f)
       );
@@ -43,9 +45,9 @@ const UploadFile = () => {
             setFileList(prev=>prev.map(f=>f.uid=== file.uid ? {...f,percent}:f))
           }
         })
-        console.log('1111111111111',url);
         message.success(`${file.name}上传成功`)
         dispatch(addImage({
+          id:uuidv4(),
           url,
           name:file.name || 'image',
           size:file.raw.size || 0,
@@ -68,7 +70,10 @@ const UploadFile = () => {
 
   // 处理拖拽上传
   const handleBeforeUpload = async (file:File)=>{
-    console.log('ffffffffffffffffffff',file);
+    if (isExpired) {
+      message.error("七牛云Token已过期, 请重新配置");
+      return;
+    }
     const isImage = file.type.startsWith("image/")
     if(!isImage){
       message.error('只能上传图片')
@@ -99,6 +104,10 @@ const UploadFile = () => {
   };
   // 处理粘贴事件
   useEffect(()=>{
+    if (isExpired) {
+      message.error("七牛云Token已过期, 请重新配置");
+      return;
+    }
     const handlePaste = async (e:ClipboardEvent)=>{
       e.preventDefault()
       console.log("eeeeeeeeeeeeeeee", e);

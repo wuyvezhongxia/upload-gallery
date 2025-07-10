@@ -87,7 +87,11 @@ importers:
         specifier: ^8.30.1
         version: 8.35.0(eslint@9.30.0(jiti@1.21.7))(typescript@5.8.3)
 
-  packages/shared: {}
+  packages/shared:
+    dependencies:
+      clipboard-copy:
+        specifier: ^4.0.1
+        version: 4.0.1
 
   packages/upload:
     dependencies:
@@ -121,6 +125,9 @@ importers:
       upng-js:
         specifier: ^2.1.0
         version: 2.1.0
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.25.0
@@ -1004,6 +1011,9 @@ packages:
 
   classnames@2.5.1:
     resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
+
+  clipboard-copy@4.0.1:
+    resolution: {integrity: sha512-wOlqdqziE/NNTUJsfSgXmBMIrYmfd5V0HCGsR8uAKHcg+h9NENWINcfRjtWGU77wDHC8B8ijV4hMTGYbrKovng==}
 
   clipboardy@4.0.0:
     resolution: {integrity: sha512-5mOlNS0mhX0707P2I0aZ2V/cmHUEO/fL7VFLqszkhUsxt7RwnmrInf/eEQKlf5GzvYeHIjT+Ov1HRfNmymlG0w==}
@@ -2110,6 +2120,10 @@ packages:
     resolution: {integrity: sha512-PYxZDA+6QtvRvm//++aGdmKG/cI07jNwbROz0Ql+VzFV1+Z0Dy55NI4zZ7RHc9KKpBePNFwoErqIuqQv/cjiTA==}
     engines: {node: '>= 0.12.0'}
 
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+
   uzip@0.20201231.0:
     resolution: {integrity: sha512-OZeJfZP+R0z9D6TmBgLq2LHzSSptGMGDGigGiEe0pr8UBe/7fdflgHlHBNDASTXB5jnFuxHpNaJywSg8YFeGng==}
 
@@ -3031,6 +3045,8 @@ snapshots:
       readdirp: 4.1.2
 
   classnames@2.5.1: {}
+
+  clipboard-copy@4.0.1: {}
 
   clipboardy@4.0.0:
     dependencies:
@@ -4203,6 +4219,8 @@ snapshots:
       mkdirp: 0.5.6
       mz: 2.7.0
       unescape: 1.0.1
+
+  uuid@11.1.0: {}
 
   uzip@0.20201231.0: {}
 
