@@ -1,34 +1,40 @@
 {
-  "name": "vite-plugins",
+  "name": "@your-scope/vite-tinypng-plugin",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
   },
-  "author": "",
   "keywords": [
     "vite",
     "plugin",
-    "image compression",
-    "tinypng"
+    "tinypng",
+    "image",
+    "compression"
   ],
-  "description": "Use [tinypng.com](https://tinypng.com) upload/download achieve compress images",
-  "license": "ISC",
+  "description": "Vite plugin for TinyPNG image compression",
+  "author": "",
+  "license": "MIT",
   "packageManager": "pnpm@10.4.1",
   "devDependencies": {
-    "@types/node": "^24.0.14",
-    "typescript": "^5.8.3",
-    "vite": "^7.0.4"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "fs-extra": "^11.2.0",
+    "p-limit": "^6.2.0"
   }
 }
