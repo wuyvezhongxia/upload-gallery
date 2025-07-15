@@ -14,6 +14,16 @@ export const copyRes = (text:string,msg = '结果已成功复制到剪贴板')=>
   })
 }
 
+export const copyUrl = async (url: string) => {
+  copyRes(url);
+};
+
+export const copyMd = async (url: string, name?: string) => {
+  const markdownText = `![${name || "image"}](${url})`;
+  copyRes(markdownText, "Markdown格式已复制");
+};
+
+
 // base64转换
 export function base64(s: string){
     return window.btoa(encodeURIComponent(s));
