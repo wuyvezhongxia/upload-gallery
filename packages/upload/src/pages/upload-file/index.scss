@@ -32,3 +32,32 @@
     }
 }
 
+.upload-progress-container {
+  margin-top: 16px;
+  
+  .upload-progress-item {
+    margin-bottom: 8px;
+    
+    .file-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      
+      .file-name {
+        font-weight: 500;
+        color: #333;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .file-status {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  }
+}
+

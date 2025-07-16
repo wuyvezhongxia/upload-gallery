@@ -1,5 +1,5 @@
 import { CloudUploadOutlined } from "@ant-design/icons";
-import { Upload, message } from "antd";
+import { Upload, message, Progress, Card } from "antd";
 import './index.scss'
 import { useState, useEffect, useRef } from "react";
 import { addImage } from "../../store/modules/imageStore";
@@ -75,7 +75,7 @@ const UploadFile = () => {
         setTimeout(() => {
           setFileList((prev) => prev.filter(f => f.uid !== file.uid))
           uploadingFiles.current.delete(file.uid);
-        })
+        },1000)
       } catch (error) {
         message.error(`${file.name} 上传失败: ${error}`);
         setFileList((prev) =>
@@ -102,10 +102,7 @@ const UploadFile = () => {
     const originalSize = file.size; // 记录原始文件大小
     let processedFile: File = file;
     
-    if (config.compressImage) {
-      const loadingKey = 'compress-loading';
-      message.loading({ content: "正在压缩图片...", key: loadingKey, duration: 0 });
-      
+    if (config.compressImage) {  
       try {
         processedFile = await compressImage(file, {
           quality: 80,
@@ -113,20 +110,9 @@ const UploadFile = () => {
           noCompressIfLarger: true,
           useTinyPng: true
         });
-        
-        message.success({ 
-          content: `压缩完成！${originalSize} → ${processedFile.size} bytes`, 
-          key: loadingKey,
-          duration: 2
-        });
-        
+        message.loading ("正在压缩图片...")
       } catch (error: any) {
         console.error('压缩过程出错,改用本地压缩', error);
-        message.warning({ 
-          content: '压缩失败，使用原文件上传', 
-          key: loadingKey,
-          duration: 3
-        });
         // 不要阻止上传，使用原文件
         processedFile = file;
       }
@@ -173,7 +159,6 @@ const UploadFile = () => {
             let processedFile: File = file;
             
             if (config.compressImage) {
-              message.loading("正在压缩图片...", 0)
               processedFile = await compressImage(file, {
                 quality: 80,
                 width: 1200,
@@ -234,6 +219,34 @@ const UploadFile = () => {
           拖拽文件到这里或<span>点击上传</span>
         </p>
       </Dragger>
+      
+      {/* 添加进度条显示区域 */}
+      {fileList.length > 0 && (
+        <div className="upload-progress-container">
+          {fileList.map((file) => (
+            <Card key={file.uid} className="upload-progress-item" size="small">
+              <div className="file-info">
+                <span className="file-name">{file.name}</span>
+                <span className="file-status">
+                  {file.status === 'uploading' && '上传中...'}
+                  {file.status === 'success' && '上传成功'}
+                  {file.status === 'error' && '上传失败'}
+                  {file.status === 'ready' && '准备上传'}
+                </span>
+              </div>
+              <Progress 
+                percent={file.percent || 0} 
+                status={
+                  file.status === 'error' ? 'exception' : 
+                  file.status === 'success' ? 'success' : 'active'
+                }
+                size="small"
+                showInfo={true}
+              />
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

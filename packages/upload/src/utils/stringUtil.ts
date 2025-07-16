@@ -4,13 +4,16 @@ import dayjs from 'dayjs'
 import copy from "clipboard-copy";
 
 export const copyRes = (text:string,msg = '结果已成功复制到剪贴板')=>{
-  copy(text).then(()=>{
-    if(msg){
-      message.success(msg)
-    }
-  }).catch((err)=>{
-    console.log('❌ 复制失败:', err);
-  })
+  copy(text)
+    .then(() => {
+      if (msg) {
+        message.success(msg);
+      }
+    })
+    .catch((err) => {
+      message.error(err?.message || "无粘贴板权限");
+      message.warning("不支持自动复制，请手动选择复制");
+    });
 }
 
 export const copyUrl = async (url: string) => {
