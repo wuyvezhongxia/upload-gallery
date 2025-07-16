@@ -3,64 +3,107 @@ import imageCompression from "browser-image-compression";
 import UPNG from 'upng-js'
 import type { CompressOptions } from "../types/compressOptions";
 import Compressor from "compressorjs";
-import { dataURLtoFile } from "./transform";
+import { dataURLtoFile, calculateCompressionPercentage, formatSize } from "./transform";
 import { compressImageFile, resetTinyPngStatus, getTinyPngStatus } from '@yuanjing/tinypng-plugin';
 
+// 扩展压缩选项接口，添加进度回调
+interface ExtendedCompressOptions extends CompressOptions {
+    onProgress?: (percent: number, info?: string) => void;
+}
+
 // 智能压缩函数 - 优先使用 TinyPNG，失败时回退到本地压缩
-async function compressImage(file: File, ops: CompressOptions = {}): Promise<File> {
-    const { noCompressIfLarger = true,useTinyPng } = ops;
+async function compressImage(file: File, ops: ExtendedCompressOptions = {}): Promise<File> {
+    const { noCompressIfLarger = true, useTinyPng, onProgress } = ops;
     
     // 如果启用 TinyPNG
     if (useTinyPng) {
         try {
-            // 修正：使用正确的 API 参数格式
+            onProgress?.(10, 'TinyPNG 压缩开始...');
+            
+            let currentProgress = 10;
+            const progressInterval = setInterval(() => {
+                if (currentProgress < 80) {
+                    currentProgress += Math.random() * 5 + 2;
+                    currentProgress = Math.min(currentProgress, 80);
+                    onProgress?.(Math.floor(currentProgress), 'TinyPNG 压缩中...');
+                }
+            }, 300); 
+            
             const compressedFile = await compressImageFile(file, {
                 proxyUrl: import.meta.env.VITE_TINYPNG_PROXY_URL || 'http://localhost:3001/api/tinypng/compress',
                 maxFileSize: 10 * 1024 * 1024,
                 enableCache: true
             });
             
+            clearInterval(progressInterval);
+            
+            // 计算压缩率
+            const compressionRate = calculateCompressionPercentage(file.size, compressedFile.size);
+            const originalSizeStr = formatSize(file.size);
+            const compressedSizeStr = formatSize(compressedFile.size);
+            
             console.log(`✅ TinyPNG 压缩成功: ${file.size} → ${compressedFile.size} bytes`);
+            console.log(`📊 压缩率: ${compressionRate}% (${originalSizeStr} → ${compressedSizeStr})`);
+            
+            onProgress?.(100, `TinyPNG 压缩完成！压缩率: ${compressionRate}%`);
             
             if (!noCompressIfLarger || file.size > compressedFile.size) {
                 return compressedFile;
             }
         } catch (error: any) {
-            console.warn('TinyPNG 压缩失败，使用本地压缩:', error.message);
+            onProgress?.(0, 'TinyPNG 压缩失败，切换到本地压缩...');
             
             // 如果是配额用完，记录状态
             if (error.message === 'QUOTA_EXHAUSTED') {
                 console.warn('🚫 TinyPNG 配额已用完，切换到本地压缩');
+                onProgress?.(0, 'TinyPNG 配额已用完，使用本地压缩...');
             }
         }
     }
     
     // 本地压缩逻辑
-    return await localCompress(file, ops);
+    onProgress?.(10, '开始本地压缩...');
+    const result = await localCompress(file, { ...ops, onProgress });
+    
+    // 计算本地压缩率
+    if (result !== file) {
+        const compressionRate = calculateCompressionPercentage(file.size, result.size);
+        onProgress?.(100, `本地压缩完成！压缩率: ${compressionRate}%`);
+    } else {
+        onProgress?.(100, '文件无需压缩');
+    }
+    
+    return result;
 }
 
 // 本地压缩函数
-async function localCompress(file: File, ops: CompressOptions = {}): Promise<File> {
-    const { noCompressIfLarger = true, quality = 80, width, height } = ops;
+async function localCompress(file: File, ops: ExtendedCompressOptions = {}): Promise<File> {
+    const { noCompressIfLarger = true, quality = 80, width, height, onProgress } = ops;
     
     const isPng = await isPNG(file);
     const isJpg = await isJPG(file);
     let newFile: File | null = null;
 
     if (isPng) {
+        onProgress?.(30, '处理 PNG 图片...');
         const arrayBuffer = await getBlobArrayBuffer(file)
         const decoded = UPNG.decode(arrayBuffer)
         const rgba8 = UPNG.toRGBA8(decoded)
+        onProgress?.(60, '压缩 PNG 图片...');
         const compressed = UPNG.encode(rgba8, width || decoded.width, height || decoded.height, convertQualityToBit(quality))
         newFile = new File([compressed], file.name, { type: 'image/png' })
+        onProgress?.(90, 'PNG 压缩完成');
     }
 
     if (isJpg) {
+        onProgress?.(30, '处理 JPG 图片...');
         const compressed = await compressJPGImage(file, 'browser-image-compression', ops);
         newFile = new File([compressed], file.name, { type: "image/jpeg" });
+        onProgress?.(90, 'JPG 压缩完成');
     }
     
     if (!newFile) {
+        onProgress?.(100, '文件格式不支持压缩');
         return file;
     }
     
@@ -68,10 +111,11 @@ async function localCompress(file: File, ops: CompressOptions = {}): Promise<Fil
         return newFile;
     }
     
+    const compressionRate = calculateCompressionPercentage(file.size, newFile.size);
     console.log('本地压缩结果:', {
         original: file.size,
         compressed: newFile.size,
-        ratio: `${((newFile.size / file.size) * 100).toFixed(1)}%`
+        ratio: `${compressionRate}%`
     });
     
     return file.size > newFile.size ? newFile : file;
@@ -179,7 +223,7 @@ function compressImageByCanvas(file: File, options: CompressOptions = {}): Promi
 
 function compressImageByImageCompression(file: File, options: CompressOptions = {}) {
     const { quality = 80, width, height } = options;
-        const maxSizeMB = (file.size / (1024 * 1024)) * (quality / 100);
+    const maxSizeMB = (file.size / (1024 * 1024)) * (quality / 100);
     return imageCompression(file, {
         maxWidthOrHeight: width || height || undefined,
         maxSizeMB: Math.max(0.1, maxSizeMB), // 确保最小值为 0.1MB
@@ -203,9 +247,9 @@ function compressImageByCompressor(file: File, options: CompressOptions = {}) {
 }
 
 // 便捷函数导出
-export const smartCompress = compressImage; // 智能压缩（TinyPNG + 本地）
-export const localCompressOnly = localCompress; // 仅本地压缩
-export { compressImage }; // 兼容旧版本
+export const smartCompress = compressImage;
+export const localCompressOnly = localCompress;
+export { compressImage };
 
 // TinyPNG 状态管理
 export { getTinyPngStatus, resetTinyPngStatus };
