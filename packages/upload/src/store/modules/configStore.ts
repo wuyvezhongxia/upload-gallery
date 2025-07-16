@@ -45,7 +45,7 @@ const configQiniuStore = createSlice({
                     localStorage.setItem('upload-token',action.payload)
                 }
             }
-            catch(error){
+            catch(error:any){
                 if(state.warningTimer){
                     return
                 }
