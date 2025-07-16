@@ -1,32 +1,39 @@
 import { Plugin } from 'vite';
 
-interface TinyPngPluginOptions {
-    apiKey: string;
-    include?: RegExp | string[];
-    exclude?: RegExp | string[];
-    cacheDir?: string;
-    cache?: boolean;
-    inlineThreshold?: number;
-    concurrency?: number;
-}
-declare class TinyPngCompressor {
-    private cachePath;
-    private apiKey;
-    private enableCache;
-    constructor(apiKey: string, cacheDir?: string, enableCache?: boolean);
-    compressImage(file: Buffer, originalPath?: string): Promise<Buffer>;
-}
-declare function tinyPngPlugin(options: TinyPngPluginOptions): Plugin;
-
-interface UploadCompressPluginOptions {
-    apiKey: string;
-    uploadPaths?: string[];
+interface FrontendCompressPluginOptions {
+    apiKey?: string;
+    enableTinyPng?: boolean;
+    enableLocalCompress?: boolean;
+    quality?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    maxFileSize?: number;
     concurrency?: number;
     enableCache?: boolean;
+    autoInject?: boolean;
+}
+interface ClientCompressOptions {
+    apiKey?: string;
     quality?: number;
+    maxWidth?: number;
+    maxHeight?: number;
     maxFileSize?: number;
+    enableCache?: boolean;
+    preferTinyPng?: boolean;
     fallbackToLocal?: boolean;
 }
-declare function uploadCompressPlugin(options: UploadCompressPluginOptions): Plugin;
+declare function compressWithTinyPng(buffer: ArrayBuffer, apiKey: string): Promise<ArrayBuffer>;
+declare function compressWithCanvas(file: File, options: {
+    quality?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+}): Promise<File>;
+declare function compressImageFile(file: File, options?: ClientCompressOptions): Promise<File>;
+declare function resetTinyPngStatus(): void;
+declare function getTinyPngStatus(): {
+    quotaExhausted: boolean;
+};
+declare function frontendCompressPlugin(options?: any): Plugin;
+declare function uploadCompressPlugin(options: any): Plugin;
 
-export { TinyPngCompressor, type UploadCompressPluginOptions, tinyPngPlugin, uploadCompressPlugin };
+export { type ClientCompressOptions, type FrontendCompressPluginOptions, compressImageFile, compressWithCanvas, compressWithTinyPng, frontendCompressPlugin, getTinyPngStatus, resetTinyPngStatus, uploadCompressPlugin };

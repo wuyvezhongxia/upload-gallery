@@ -108,6 +108,7 @@ const UploadFile = () => {
         quality: 80,
         width: 1200,
         noCompressIfLarger: true,
+        useTinyPng:true
       });
       message.destroy();
     }
@@ -158,6 +159,7 @@ const UploadFile = () => {
                 quality: 80,
                 width: 1200,
                 noCompressIfLarger: true,
+                useTinyPng: true
               });
               message.destroy();
             }

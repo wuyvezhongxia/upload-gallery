@@ -4,10 +4,31 @@ import UPNG from 'upng-js'
 import type { CompressOptions } from "../types/compressOptions";
 import Compressor from "compressorjs";
 import { dataURLtoFile } from "./transform";
+import { compressImageFile, resetTinyPngStatus, getTinyPngStatus } from '@yuanjing/tinypng-plugin';
 
 async function compressImage(file:File, ops:CompressOptions = {}){
-    const { noCompressIfLarger = true, quality = 80, width, height } = ops;
-    const isPng = await isPNG(file)
+    const { noCompressIfLarger = true, quality = 80, width, height, useTinyPng } = ops;
+    
+    // 如果启用 TinyPNG
+    if (useTinyPng && import.meta.env.VITE_TINYPNG_API_KEY) {
+        try {
+            const compressedFile = await compressImageFile(file, {
+                apiKey: import.meta.env.VITE_TINYPNG_API_KEY,
+                quality: quality / 100,
+                maxFileSize: 10 * 1024 * 1024,
+                enableCache: true
+            });
+            
+            if (!noCompressIfLarger || file.size > compressedFile.size) {
+                return compressedFile;
+            }
+        } catch (error) {
+            console.warn('TinyPNG 压缩失败，使用本地压缩:', error);
+        }
+    }
+    
+    // 继续原有的本地压缩逻辑
+    const isPng = await isPNG(file);
     const isJpg = await isJPG(file)
     let newFile: File | null = null
 
@@ -218,3 +239,6 @@ function compressImageByCompressor(file:File,options:CompressOptions={}){
 export {
     compressImage
 }
+
+// 导出状态检查函数，方便调试
+export { resetTinyPngStatus, getTinyPngStatus };

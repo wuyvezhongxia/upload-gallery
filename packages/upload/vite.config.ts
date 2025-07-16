@@ -1,21 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { uploadCompressPlugin } from '@yuanjing/tinypng-plugin'
+import { frontendCompressPlugin } from '@yuanjing/tinypng-plugin'
 import { resolve } from 'path'
+import type { PluginOption } from 'vite'
 
 export default defineConfig({
   plugins: [
     react(),
-    // 添加上传压缩插件
-    uploadCompressPlugin({
-      apiKey: process.env.VITE_TINYPNG_API_KEY,
-      uploadPaths: ['/api/upload', '/upload'], // 拦截的上传路径
+    frontendCompressPlugin({
+      apiKey: process.env.VITE_TINYPNG_API_KEY || '',
+      enableTinyPng: true,
+      enableLocalCompress: true,
+      quality: 0.8,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      maxFileSize: 10 * 1024 * 1024,
       concurrency: 2,
       enableCache: true,
-      quality: 0.8,
-      maxFileSize: 10 * 1024 * 1024, // 10MB
-      fallbackToLocal: true
-    })
+      autoInject: true
+    }) as PluginOption
   ],
   resolve: {
     alias: {

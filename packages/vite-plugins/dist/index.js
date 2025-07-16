@@ -1,199 +1,179 @@
-// src/imageCompress.ts
-import { readFile, writeFile, mkdir, access } from "fs/promises";
+// src/uploadCompressPlugin.ts
 import axios from "axios";
-import { createHash } from "crypto";
-import { join, extname } from "path";
-import pLimit from "p-limit";
-var pathExists = async (path) => {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
+var TinyPngStatus = class _TinyPngStatus {
+  static instance;
+  quotaExhausted = false;
+  lastQuotaCheck = 0;
+  QUOTA_CHECK_INTERVAL = 60 * 60 * 1e3;
+  // 1小时重置检查
+  static getInstance() {
+    if (!_TinyPngStatus.instance) {
+      _TinyPngStatus.instance = new _TinyPngStatus();
+    }
+    return _TinyPngStatus.instance;
+  }
+  isQuotaExhausted() {
+    const now = Date.now();
+    if (now - this.lastQuotaCheck > this.QUOTA_CHECK_INTERVAL) {
+      this.quotaExhausted = false;
+      this.lastQuotaCheck = now;
+    }
+    return this.quotaExhausted;
+  }
+  markQuotaExhausted() {
+    this.quotaExhausted = true;
+    this.lastQuotaCheck = Date.now();
+    console.warn("\u{1F6AB} TinyPNG \u914D\u989D\u5DF2\u7528\u5B8C\uFF0C\u540E\u7EED\u5C06\u4F7F\u7528\u672C\u5730\u538B\u7F29");
+  }
+  reset() {
+    this.quotaExhausted = false;
+    this.lastQuotaCheck = 0;
   }
 };
-var ensureDir = async (dir) => {
+var compressionCache = /* @__PURE__ */ new Map();
+var tinyPngStatus = TinyPngStatus.getInstance();
+async function compressWithTinyPng(buffer, apiKey) {
   try {
-    await mkdir(dir, { recursive: true });
+    const response = await axios({
+      method: "post",
+      url: "https://api.tinify.com/shrink",
+      auth: {
+        username: "api",
+        password: apiKey
+      },
+      data: buffer,
+      headers: {
+        "Content-Type": "application/octet-stream"
+      },
+      timeout: 3e4
+    });
+    const compressedResponse = await axios({
+      method: "get",
+      url: response.data.output.url,
+      responseType: "arraybuffer",
+      timeout: 3e4
+    });
+    return compressedResponse.data;
   } catch (error) {
-    if (error.code !== "EEXIST") {
-      throw error;
+    if (error.response?.status === 429 || error.response?.data?.error === "TooManyRequests" || error.message?.includes("quota") || error.message?.includes("limit")) {
+      tinyPngStatus.markQuotaExhausted();
+      throw new Error("QUOTA_EXHAUSTED");
     }
+    throw error;
   }
-};
-var getImageMimeType = (filePath) => {
-  const ext = extname(filePath).toLowerCase();
-  const mimeMap = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".webp": "image/webp",
-    ".avif": "image/avif",
-    ".bmp": "image/bmp",
-    ".tiff": "image/tiff",
-    ".tif": "image/tiff",
-    ".svg": "image/svg+xml"
-  };
-  return mimeMap[ext] || "image/jpeg";
-};
-var TinyPngCompressor = class {
-  cachePath;
-  apiKey;
-  enableCache;
-  constructor(apiKey, cacheDir = "node_modules/.cache/vite-tinypng", enableCache = true) {
-    this.apiKey = apiKey;
-    this.cachePath = join(process.cwd(), cacheDir);
-    this.enableCache = enableCache;
-  }
-  async compressImage(file, originalPath) {
-    const hashname = createHash("md5").update(file).digest("hex");
-    const ext = originalPath ? extname(originalPath) : ".jpg";
-    const filePath = join(this.cachePath, hashname + ext);
-    if (this.enableCache && await pathExists(filePath)) {
-      console.log(`Using cached image: ${originalPath || "image"}`);
-      return await readFile(filePath);
-    }
-    try {
-      if (this.enableCache) {
-        await ensureDir(this.cachePath);
-      }
-      const response = await axios({
-        method: "post",
-        url: "https://api.tinify.com/shrink",
-        auth: {
-          username: "api",
-          password: this.apiKey
-        },
-        data: file,
-        headers: {
-          "Content-Type": "application/octet-stream"
-        }
-      });
-      const compressedResponse = await axios({
-        method: "get",
-        url: response.data.output.url,
-        responseType: "arraybuffer"
-      });
-      const compressedBuffer = Buffer.from(compressedResponse.data);
-      if (this.enableCache) {
-        await writeFile(filePath, compressedBuffer);
-      }
-      console.log(
-        `TinyPNG compressed: ${originalPath || "image"} (${file.length} \u2192 ${compressedBuffer.length} bytes)`
-      );
-      return compressedBuffer;
-    } catch (error) {
-      if (error.response?.status === 401) {
-        console.error("TinyPNG API Key \u65E0\u6548\uFF0C\u8BF7\u68C0\u67E5\u4F60\u7684 API Key");
-      } else if (error.response?.status === 429) {
-        console.error("TinyPNG API \u914D\u989D\u5DF2\u7528\u5B8C");
-      } else {
-        console.warn("TinyPNG compression failed:", error.message);
-      }
-      return file;
-    }
-  }
-};
-function shouldProcessImage(id, include, exclude) {
-  if (include instanceof RegExp) {
-    if (!include.test(id)) return false;
-  } else if (Array.isArray(include)) {
-    if (!include.some((pattern) => id.endsWith(pattern))) return false;
-  }
-  if (exclude) {
-    if (exclude instanceof RegExp) {
-      if (exclude.test(id)) return false;
-    } else if (Array.isArray(exclude)) {
-      if (exclude.some((pattern) => id.endsWith(pattern))) return false;
-    }
-  }
-  return true;
 }
-function tinyPngPlugin(options) {
+async function compressWithCanvas(file, options) {
+  const { quality = 0.8, maxWidth = 1920, maxHeight = 1080 } = options;
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width *= ratio;
+        height *= ratio;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: file.type }));
+          } else {
+            resolve(file);
+          }
+        },
+        file.type,
+        quality
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function compressImageFile(file, options = {}) {
   const {
     apiKey,
-    include = /\.(png|jpe?g|gif|webp|avif|bmp|tiff?|svg)$/i,
-    exclude,
-    cacheDir = "node_modules/.cache/vite-tinypng",
-    cache = true,
-    inlineThreshold = 8192,
-    // 8KB
-    concurrency = 5
+    quality = 0.8,
+    maxWidth = 1920,
+    maxHeight = 1080,
+    maxFileSize = 10 * 1024 * 1024,
+    enableCache = true,
+    preferTinyPng = true,
+    fallbackToLocal = true
   } = options;
-  if (!apiKey) {
-    throw new Error(
-      "TinyPNG API Key is required. Get one from https://tinypng.com/developers"
-    );
+  if (file.size > maxFileSize) {
+    console.warn(`\u6587\u4EF6\u5927\u5C0F\u8D85\u8FC7\u9650\u5236: ${file.size} > ${maxFileSize}`);
+    return file;
   }
-  const compressor = new TinyPngCompressor(apiKey, cacheDir, cache);
-  const limit = pLimit(concurrency);
-  return {
-    name: "vite:tinypng",
-    apply: "build",
-    async generateBundle(options2, bundle) {
-      const imageAssets = Object.keys(bundle).filter(
-        (fileName) => shouldProcessImage(fileName, include, exclude)
-      );
-      await Promise.all(
-        imageAssets.map(
-          (fileName) => limit(async () => {
-            const asset = bundle[fileName];
-            if (asset && asset.type === "asset" && "source" in asset && asset.source) {
-              try {
-                const buffer = Buffer.isBuffer(asset.source) ? asset.source : Buffer.from(asset.source);
-                const compressedBuffer = await compressor.compressImage(buffer, fileName);
-                if (compressedBuffer.length < inlineThreshold) {
-                  const mimeType = getImageMimeType(fileName);
-                  const base64 = compressedBuffer.toString("base64");
-                  asset.source = `data:${mimeType};base64,${base64}`;
-                } else {
-                  asset.source = compressedBuffer;
-                }
-              } catch (error) {
-                console.warn(`Failed to compress image: ${fileName}`, error);
-              }
-            }
-          })
-        )
-      );
+  if (!isSupportedImageType(file.type)) {
+    console.warn(`\u4E0D\u652F\u6301\u7684\u6587\u4EF6\u7C7B\u578B: ${file.type}`);
+    return file;
+  }
+  let compressedFile = file;
+  const originalSize = file.size;
+  try {
+    if (preferTinyPng && apiKey && !tinyPngStatus.isQuotaExhausted()) {
+      try {
+        console.log("\u{1F3AF} \u4F18\u5148\u4F7F\u7528 TinyPNG \u538B\u7F29...");
+        const buffer = await file.arrayBuffer();
+        const cacheKey = generateCacheKey(new Uint8Array(buffer));
+        if (enableCache && compressionCache.has(cacheKey)) {
+          console.log("\u2705 \u4F7F\u7528\u7F13\u5B58\u7684 TinyPNG \u538B\u7F29\u7ED3\u679C");
+          const cachedBuffer = compressionCache.get(cacheKey);
+          compressedFile = new File([cachedBuffer], file.name, { type: file.type });
+        } else {
+          const compressedBuffer = await compressWithTinyPng(buffer, apiKey);
+          if (enableCache) {
+            compressionCache.set(cacheKey, compressedBuffer);
+          }
+          compressedFile = new File([compressedBuffer], file.name, { type: file.type });
+        }
+        const tinyRatio = compressedFile.size / originalSize;
+        console.log(
+          `\u2705 TinyPNG \u538B\u7F29\u6210\u529F: ${originalSize} \u2192 ${compressedFile.size} bytes (${(tinyRatio * 100).toFixed(1)}%)`
+        );
+        return compressedFile;
+      } catch (error) {
+        if (error.message === "QUOTA_EXHAUSTED") {
+          console.warn("\u26A0\uFE0F TinyPNG \u914D\u989D\u5DF2\u7528\u5B8C\uFF0C\u56DE\u9000\u5230\u672C\u5730\u538B\u7F29");
+        } else {
+          console.warn("\u26A0\uFE0F TinyPNG \u538B\u7F29\u5931\u8D25\uFF0C\u56DE\u9000\u5230\u672C\u5730\u538B\u7F29:", error.message);
+        }
+      }
     }
-  };
-}
-
-// src/uploadCompressPlugin.ts
-import axios2 from "axios";
-import { createHash as createHash2 } from "crypto";
-import pLimit2 from "p-limit";
-var compressionCache = /* @__PURE__ */ new Map();
-async function compressWithTinyPng(buffer, apiKey) {
-  const response = await axios2({
-    method: "post",
-    url: "https://api.tinify.com/shrink",
-    auth: {
-      username: "api",
-      password: apiKey
-    },
-    data: buffer,
-    headers: {
-      "Content-Type": "application/octet-stream"
-    },
-    timeout: 3e4
-  });
-  const compressedResponse = await axios2({
-    method: "get",
-    url: response.data.output.url,
-    responseType: "arraybuffer",
-    timeout: 3e4
-  });
-  return Buffer.from(compressedResponse.data);
-}
-async function fallbackCompress(buffer, quality = 0.8) {
-  console.warn("\u672C\u5730\u538B\u7F29\u529F\u80FD\u9700\u8981\u96C6\u6210 sharp \u5E93");
-  return buffer;
+    if (fallbackToLocal) {
+      console.log("\u{1F504} \u4F7F\u7528\u672C\u5730\u538B\u7F29...");
+      compressedFile = await compressWithCanvas(file, {
+        quality,
+        maxWidth,
+        maxHeight
+      });
+      const localRatio = compressedFile.size / originalSize;
+      console.log(
+        `\u2705 \u672C\u5730\u538B\u7F29\u5B8C\u6210: ${originalSize} \u2192 ${compressedFile.size} bytes (${(localRatio * 100).toFixed(1)}%)`
+      );
+      return compressedFile;
+    }
+    console.log("\u2139\uFE0F \u672A\u542F\u7528\u4EFB\u4F55\u538B\u7F29\u65B9\u5F0F\uFF0C\u8FD4\u56DE\u539F\u6587\u4EF6");
+    return file;
+  } catch (error) {
+    console.error("\u274C \u56FE\u7247\u538B\u7F29\u5931\u8D25:", error.message);
+    return file;
+  }
 }
 function generateCacheKey(buffer) {
-  return createHash2("md5").update(buffer).digest("hex");
+  let hash = 0;
+  const str = Array.from(buffer.slice(0, 32)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
 }
 function isSupportedImageType(contentType) {
   const supportedTypes = [
@@ -204,133 +184,41 @@ function isSupportedImageType(contentType) {
   ];
   return supportedTypes.includes(contentType);
 }
-function uploadCompressPlugin(options) {
-  const {
-    apiKey,
-    uploadPaths = ["/api/upload", "/upload"],
-    concurrency = 3,
-    enableCache = true,
-    quality = 0.8,
-    maxFileSize = 10 * 1024 * 1024,
-    // 10MB
-    fallbackToLocal = true
-  } = options;
-  if (!apiKey) {
-    throw new Error("TinyPNG API Key is required");
-  }
-  const limit = pLimit2(concurrency);
+function resetTinyPngStatus() {
+  tinyPngStatus.reset();
+  console.log("\u{1F504} TinyPNG \u72B6\u6001\u5DF2\u91CD\u7F6E");
+}
+function getTinyPngStatus() {
   return {
-    name: "vite:upload-compress",
-    apply: "serve",
-    // 只在开发服务器中生效
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        const isUploadPath = uploadPaths.some(
-          (path) => req.url?.startsWith(path)
-        );
-        if (!isUploadPath || req.method !== "POST") {
-          return next();
-        }
-        const contentType = req.headers["content-type"] || "";
-        if (contentType.includes("multipart/form-data")) {
-          return handleMultipartUpload(req, res, next, {
-            apiKey,
-            limit,
-            enableCache,
-            quality,
-            maxFileSize,
-            fallbackToLocal
-          });
-        }
-        if (isSupportedImageType(contentType)) {
-          return handleDirectImageUpload(req, res, next, {
-            apiKey,
-            limit,
-            enableCache,
-            quality,
-            maxFileSize,
-            fallbackToLocal
-          });
-        }
-        next();
+    quotaExhausted: tinyPngStatus.isQuotaExhausted()
+  };
+}
+function frontendCompressPlugin(options = {}) {
+  return {
+    name: "vite:frontend-compress",
+    apply: "build",
+    config(config) {
+      if (!config.define) {
+        config.define = {};
+      }
+      config.define.__COMPRESS_CONFIG__ = JSON.stringify({
+        preferTinyPng: true,
+        fallbackToLocal: true,
+        ...options
       });
     }
   };
 }
-async function handleMultipartUpload(req, res, next, options) {
-  const chunks = [];
-  req.on("data", (chunk) => {
-    chunks.push(chunk);
-  });
-  req.on("end", async () => {
-    try {
-      const buffer = Buffer.concat(chunks);
-      const compressedBuffer = await compressImage(buffer, options);
-      req.body = compressedBuffer;
-      next();
-    } catch (error) {
-      console.error("\u56FE\u7247\u538B\u7F29\u5931\u8D25:", error);
-      next();
-    }
-  });
-}
-async function handleDirectImageUpload(req, res, next, options) {
-  const chunks = [];
-  req.on("data", (chunk) => {
-    chunks.push(chunk);
-  });
-  req.on("end", async () => {
-    try {
-      const buffer = Buffer.concat(chunks);
-      const compressedBuffer = await compressImage(buffer, options);
-      req.body = compressedBuffer;
-      req.headers["content-length"] = compressedBuffer.length.toString();
-      next();
-    } catch (error) {
-      console.error("\u56FE\u7247\u538B\u7F29\u5931\u8D25:", error);
-      next();
-    }
-  });
-}
-async function compressImage(buffer, options) {
-  const { apiKey, limit, enableCache, quality, maxFileSize, fallbackToLocal } = options;
-  if (buffer.length > maxFileSize) {
-    console.warn(`\u6587\u4EF6\u5927\u5C0F\u8D85\u8FC7\u9650\u5236: ${buffer.length} > ${maxFileSize}`);
-    return buffer;
-  }
-  const cacheKey = generateCacheKey(buffer);
-  if (enableCache && compressionCache.has(cacheKey)) {
-    console.log("\u4F7F\u7528\u7F13\u5B58\u7684\u538B\u7F29\u7ED3\u679C");
-    return compressionCache.get(cacheKey);
-  }
-  try {
-    const compressedBuffer = await limit(async () => {
-      return await compressWithTinyPng(buffer, apiKey);
-    });
-    if (enableCache) {
-      compressionCache.set(cacheKey, compressedBuffer);
-    }
-    const compressionRatio = compressedBuffer.length / buffer.length;
-    console.log(
-      `TinyPNG \u538B\u7F29\u5B8C\u6210: ${buffer.length} \u2192 ${compressedBuffer.length} bytes (${(compressionRatio * 100).toFixed(1)}%)`
-    );
-    return compressedBuffer;
-  } catch (error) {
-    console.warn("TinyPNG \u538B\u7F29\u5931\u8D25:", error.message);
-    if (fallbackToLocal) {
-      try {
-        const compressedBuffer = await fallbackCompress(buffer, quality);
-        console.log("\u4F7F\u7528\u672C\u5730\u538B\u7F29\u56DE\u9000");
-        return compressedBuffer;
-      } catch (localError) {
-        console.warn("\u672C\u5730\u538B\u7F29\u4E5F\u5931\u8D25:", localError);
-      }
-    }
-    return buffer;
-  }
+function uploadCompressPlugin(options) {
+  console.warn("uploadCompressPlugin \u5DF2\u5E9F\u5F03\uFF0C\u8BF7\u4F7F\u7528 frontendCompressPlugin");
+  return frontendCompressPlugin(options);
 }
 export {
-  TinyPngCompressor,
-  tinyPngPlugin,
+  compressImageFile,
+  compressWithCanvas,
+  compressWithTinyPng,
+  frontendCompressPlugin,
+  getTinyPngStatus,
+  resetTinyPngStatus,
   uploadCompressPlugin
 };
