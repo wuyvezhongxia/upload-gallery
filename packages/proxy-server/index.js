@@ -19,45 +19,66 @@ app.use(express.json());
 
 // TinyPNG 压缩代理接口
 app.post('/api/tinypng/compress', async (req, res) => {
+  const maxRetries = 2;
+  let retryCount = 0;
+  
+  const compressWithRetry = async () => {
+    try {
+      console.log(`📤 收到压缩请求，文件大小: ${req.body.length} bytes${retryCount > 0 ? ` (重试 ${retryCount})` : ''}`);
+      
+      // 第一步：上传到 TinyPNG
+      const uploadResponse = await axios({
+        method: 'post',
+        url: 'https://api.tinify.com/shrink',
+        auth: {
+          username: 'api',
+          password: process.env.TINYPNG_API_KEY
+        },
+        data: req.body,
+        headers: {
+          'Content-Type': 'application/octet-stream'
+        },
+        timeout: 60000, // 增加到60秒
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      });
+      
+      console.log('✅ TinyPNG 处理成功，压缩率:', 
+        Math.round((uploadResponse.data.output.size / req.body.length) * 100) + '%');
+      
+      // 第二步：下载压缩后的文件
+      const downloadResponse = await axios({
+        method: 'get',
+        url: uploadResponse.data.output.url,
+        responseType: 'arraybuffer',
+        timeout: 60000, // 增加到60秒
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      });
+      
+      // 返回压缩后的文件
+      res.set({
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': downloadResponse.data.byteLength,
+        'X-Original-Size': req.body.length,
+        'X-Compressed-Size': downloadResponse.data.byteLength
+      });
+      
+      res.send(downloadResponse.data);
+      
+    } catch (error) {
+      if (retryCount < maxRetries && (error.code === 'ECONNABORTED' || error.message.includes('aborted'))) {
+        retryCount++;
+        console.log(`🔄 连接中断，正在重试 (${retryCount}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // 递增延迟
+        return compressWithRetry();
+      }
+      throw error;
+    }
+  };
+  
   try {
-    console.log('📤 收到压缩请求，文件大小:', req.body.length, 'bytes');
-    
-    // 第一步：上传到 TinyPNG
-    const uploadResponse = await axios({
-      method: 'post',
-      url: 'https://api.tinify.com/shrink',
-      auth: {
-        username: 'api',
-        password: process.env.TINYPNG_API_KEY
-      },
-      data: req.body,
-      headers: {
-        'Content-Type': 'application/octet-stream'
-      },
-      timeout: 30000
-    });
-    
-    console.log('✅ TinyPNG 处理成功，压缩率:', 
-      Math.round((uploadResponse.data.output.size / req.body.length) * 100) + '%');
-    
-    // 第二步：下载压缩后的文件
-    const downloadResponse = await axios({
-      method: 'get',
-      url: uploadResponse.data.output.url,
-      responseType: 'arraybuffer',
-      timeout: 30000
-    });
-    
-    // 返回压缩后的文件
-    res.set({
-      'Content-Type': 'application/octet-stream',
-      'Content-Length': downloadResponse.data.byteLength,
-      'X-Original-Size': req.body.length,
-      'X-Compressed-Size': downloadResponse.data.byteLength
-    });
-    
-    res.send(downloadResponse.data);
-    
+    await compressWithRetry();
   } catch (error) {
     console.error('❌ TinyPNG 压缩失败:', error.message);
     
@@ -71,6 +92,11 @@ app.post('/api/tinypng/compress', async (req, res) => {
       res.status(401).json({ 
         error: 'INVALID_API_KEY', 
         message: 'TinyPNG API Key 无效' 
+      });
+    } else if (error.code === 'ECONNABORTED' || error.message.includes('aborted')) {
+      res.status(408).json({ 
+        error: 'TIMEOUT', 
+        message: '请求超时，请稍后重试' 
       });
     } else {
       res.status(500).json({ 

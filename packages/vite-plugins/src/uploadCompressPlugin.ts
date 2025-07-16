@@ -34,7 +34,6 @@ class TinyPngStatus {
   markQuotaExhausted(): void {
     this.quotaExhausted = true;
     this.lastQuotaCheck = Date.now();
-    console.warn('🚫 TinyPNG 配额已用完');
   }
 
   reset(): void {
@@ -61,7 +60,15 @@ export async function compressWithTinyPng(
         'Content-Type': 'application/octet-stream'
       },
       responseType: 'arraybuffer',
-      timeout: 60000
+      timeout: 90000, // 增加到90秒
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`📤 上传进度: ${percentCompleted}%`);
+        }
+      }
     });
 
     return response.data;
@@ -69,8 +76,11 @@ export async function compressWithTinyPng(
     // 检查是否是配额用完的错误
     if (error.response?.status === 429 || 
         error.response?.data?.error === 'QUOTA_EXHAUSTED') {
-      tinyPngStatus.markQuotaExhausted();
-      throw new Error('QUOTA_EXHAUSTED');
+      tinyPngStatus.markQuotaExhausted();    }
+    
+    // 检查是否是超时错误
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      throw new Error('TIMEOUT');
     }
     throw error;
   }
@@ -129,8 +139,24 @@ export async function compressImageFile(
     
     return compressedFile;
   } catch (error: any) {
-    console.error('❌ TinyPNG 压缩失败:', error.message);
-    throw error;
+    // 详细的错误日志
+    console.error('❌ TinyPNG 压缩详细错误:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: error.config?.url
+    });
+    
+    // 重新抛出错误，但确保错误消息清晰
+    if (error.response?.status === 429) {
+      throw new Error('QUOTA_EXHAUSTED');
+    } else if (error.response?.status === 401) {
+      throw new Error('INVALID_API_KEY');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('TIMEOUT');
+    } else {
+      throw new Error(`TinyPNG_ERROR: ${error.message}`);
+    }
   }
 }
 
@@ -171,17 +197,13 @@ export function getTinyPngStatus(): { quotaExhausted: boolean } {
   };
 }
 
-// Vite 插件（可选）
 export function frontendCompressPlugin(options: any = {}): Plugin {
   return {
     name: 'vite:tinypng-compress',
-    apply: 'serve',
-    
     config(config) {
       if (!config.define) {
         config.define = {};
       }
-      
       config.define.__TINYPNG_CONFIG__ = JSON.stringify({
         proxyUrl: 'http://localhost:3001/api/tinypng/compress',
         ...options

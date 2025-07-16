@@ -23,7 +23,6 @@ var TinyPngStatus = class _TinyPngStatus {
   markQuotaExhausted() {
     this.quotaExhausted = true;
     this.lastQuotaCheck = Date.now();
-    console.warn("\u{1F6AB} TinyPNG \u914D\u989D\u5DF2\u7528\u5B8C");
   }
   reset() {
     this.quotaExhausted = false;
@@ -42,13 +41,24 @@ async function compressWithTinyPng(buffer, proxyUrl = "http://localhost:3001/api
         "Content-Type": "application/octet-stream"
       },
       responseType: "arraybuffer",
-      timeout: 6e4
+      timeout: 9e4,
+      // 增加到90秒
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round(progressEvent.loaded * 100 / progressEvent.total);
+          console.log(`\u{1F4E4} \u4E0A\u4F20\u8FDB\u5EA6: ${percentCompleted}%`);
+        }
+      }
     });
     return response.data;
   } catch (error) {
     if (error.response?.status === 429 || error.response?.data?.error === "QUOTA_EXHAUSTED") {
       tinyPngStatus.markQuotaExhausted();
-      throw new Error("QUOTA_EXHAUSTED");
+    }
+    if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
+      throw new Error("TIMEOUT");
     }
     throw error;
   }
@@ -86,8 +96,21 @@ async function compressImageFile(file, options = {}) {
     );
     return compressedFile;
   } catch (error) {
-    console.error("\u274C TinyPNG \u538B\u7F29\u5931\u8D25:", error.message);
-    throw error;
+    console.error("\u274C TinyPNG \u538B\u7F29\u8BE6\u7EC6\u9519\u8BEF:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: error.config?.url
+    });
+    if (error.response?.status === 429) {
+      throw new Error("QUOTA_EXHAUSTED");
+    } else if (error.response?.status === 401) {
+      throw new Error("INVALID_API_KEY");
+    } else if (error.code === "ECONNABORTED") {
+      throw new Error("TIMEOUT");
+    } else {
+      throw new Error(`TinyPNG_ERROR: ${error.message}`);
+    }
   }
 }
 function generateCacheKey(buffer) {
@@ -121,7 +144,6 @@ function getTinyPngStatus() {
 function frontendCompressPlugin(options = {}) {
   return {
     name: "vite:tinypng-compress",
-    apply: "serve",
     config(config) {
       if (!config.define) {
         config.define = {};

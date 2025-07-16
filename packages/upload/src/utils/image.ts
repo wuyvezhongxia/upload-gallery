@@ -48,28 +48,11 @@ async function localCompress(file: File, ops: CompressOptions = {}): Promise<Fil
     let newFile: File | null = null;
 
     if (isPng) {
-        try {
-            const arrayBuffer = await getBlobArrayBuffer(file);
-            const decoded = UPNG.decode(arrayBuffer);
-            const rgba8 = UPNG.toRGBA8(decoded);
-            
-            const targetWidth = width || decoded.width;
-            const targetHeight = height || decoded.height;
-            
-            let finalRgba8 = rgba8;
-            if (width || height) {
-                finalRgba8 = resizeImageData(rgba8, decoded.width, decoded.height, targetWidth, targetHeight);
-            }
-            
-            // UPNG 质量参数：0表示无损，值越大压缩越多
-            const pngQuality = quality >= 100 ? 0 : Math.floor((100 - quality) * 2.56);
-            
-            const compressed = UPNG.encode([finalRgba8], targetWidth, targetHeight, pngQuality);
-            newFile = new File([compressed], file.name, { type: 'image/png' });
-        } catch (error) {
-            console.error('PNG压缩失败:', error);
-            newFile = await fallbackPngCompression(file, ops);
-        }
+        const arrayBuffer = await getBlobArrayBuffer(file)
+        const decoded = UPNG.decode(arrayBuffer)
+        const rgba8 = UPNG.toRGBA8(decoded)
+        const compressed = UPNG.encode(rgba8, width || decoded.width, height || decoded.height, convertQualityToBit(quality))
+        newFile = new File([compressed], file.name, { type: 'image/png' })
     }
 
     if (isJpg) {
@@ -94,56 +77,6 @@ async function localCompress(file: File, ops: CompressOptions = {}): Promise<Fil
     return file.size > newFile.size ? newFile : file;
 }
 
-// 图像数据调整大小的辅助函数
-function resizeImageData(imageData: Uint8Array[], originalWidth: number, originalHeight: number, targetWidth: number, targetHeight: number): Uint8Array[] {
-    if (originalWidth === targetWidth && originalHeight === targetHeight) {
-        return imageData;
-    }
-    // 简化实现：实际项目中建议使用专业的图像处理库
-    return imageData;
-}
-
-// PNG压缩失败时的备用方案
-async function fallbackPngCompression(file: File, ops: CompressOptions): Promise<File> {
-    try {
-        const { width, height } = ops;
-        
-        return new Promise<File>((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const targetWidth = width || img.width;
-                const targetHeight = height || img.height;
-                
-                canvas.width = targetWidth;
-                canvas.height = targetHeight;
-                
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error('无法获取canvas上下文'));
-                    return;
-                }
-                
-                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-                
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(new File([blob], file.name, { type: 'image/png' }));
-                    } else {
-                        reject(new Error('Canvas转换失败'));
-                    }
-                }, 'image/png');
-            };
-            
-            img.onerror = () => reject(new Error('图片加载失败'));
-            img.src = URL.createObjectURL(file);
-        });
-    } catch (error) {
-        console.error('备用PNG压缩也失败了:', error);
-        return file;
-    }
-}
-
 function getBlobArrayBuffer(file: Blob): Promise<ArrayBuffer> {
     return file.arrayBuffer();
 }
@@ -159,6 +92,16 @@ const isJPG = async (file: File) => {
     const source = new Uint8Array(arrayBuffer);
     return source.every((value, index) => value === signature[index]);
 };
+
+function convertQualityToBit(quality: number): number {
+  let bit = 0;
+  if (quality > 100 || quality < 0) {
+    bit = 0;
+  } else {
+    bit = !quality ? 0 : quality * 256 * 0.01;
+  }
+  return bit;
+}
 
 const signatureEqual = (source: ArrayBuffer, signature: number[]) => {
     const array = new Uint8Array(source);
@@ -236,10 +179,7 @@ function compressImageByCanvas(file: File, options: CompressOptions = {}): Promi
 
 function compressImageByImageCompression(file: File, options: CompressOptions = {}) {
     const { quality = 80, width, height } = options;
-    
-    // 修正：maxSizeMB 计算公式
-    const maxSizeMB = (file.size / (1024 * 1024)) * (quality / 100);
-
+        const maxSizeMB = (file.size / (1024 * 1024)) * (quality / 100);
     return imageCompression(file, {
         maxWidthOrHeight: width || height || undefined,
         maxSizeMB: Math.max(0.1, maxSizeMB), // 确保最小值为 0.1MB

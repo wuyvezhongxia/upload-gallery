@@ -103,14 +103,33 @@ const UploadFile = () => {
     let processedFile: File = file;
     
     if (config.compressImage) {
-      message.loading("正在压缩图片...", 0);
-      processedFile = await compressImage(file, {
-        quality: 80,
-        width: 1200,
-        noCompressIfLarger: true,
-        useTinyPng:true
-      });
-      message.destroy();
+      const loadingKey = 'compress-loading';
+      message.loading({ content: "正在压缩图片...", key: loadingKey, duration: 0 });
+      
+      try {
+        processedFile = await compressImage(file, {
+          quality: 80,
+          width: 1200,
+          noCompressIfLarger: true,
+          useTinyPng: true
+        });
+        
+        message.success({ 
+          content: `压缩完成！${originalSize} → ${processedFile.size} bytes`, 
+          key: loadingKey,
+          duration: 2
+        });
+        
+      } catch (error: any) {
+        console.error('压缩过程出错,改用本地压缩', error);
+        message.warning({ 
+          content: '压缩失败，使用原文件上传', 
+          key: loadingKey,
+          duration: 3
+        });
+        // 不要阻止上传，使用原文件
+        processedFile = file;
+      }
     }
   
     setFileList((prev) => [

@@ -33,7 +33,6 @@ async function uploadFile(file:File,qiniuOps:QiNiuConfig,options?:{
       }, 100);
       return;
     }
-    console.log('ssssssssssssssssssssssssss',file, putExtra.fname, token, putExtra, config);
     const observable = qiniu.upload(
       file,
       putExtra.fname,

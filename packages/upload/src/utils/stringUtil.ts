@@ -9,8 +9,7 @@ export const copyRes = (text:string,msg = '结果已成功复制到剪贴板')=>
       message.success(msg)
     }
   }).catch((err)=>{
-    message.error(err?.message || '无粘贴板权限')
-    message.warning('不支持自动复制，请手动选择复制')
+    console.log('❌ 复制失败:', err);
   })
 }
 
@@ -49,8 +48,6 @@ export function getFileSuffix(str:string){
 
 //  文件 MD5 哈希计算
 export function getFileMd5Hash(file: File) {
-  // 大文件（如视频、压缩包）直接加载会导致浏览器内存溢出，分块读取可避免此问题
-  // FileReader 的 readAsArrayBuffer 方法是 异步执行 的
   return new Promise((resolve, reject) => {
     const bolbSlice = File.prototype.slice;
     const chunkSize = 2097152;
