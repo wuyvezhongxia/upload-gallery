@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { calculateCompressionPercentage, formatSize } from "@/utils/transform";
 import { fomatData, copyUrl, copyMd } from "@/utils/stringUtil";
-import type { ImageItem } from "@/store/modules/imageStore";
+import type { ImageItem } from "@yuanjing/shared";
 import { useState } from "react";
 import { useUploadConfig } from "@/Hooks/upload";
 

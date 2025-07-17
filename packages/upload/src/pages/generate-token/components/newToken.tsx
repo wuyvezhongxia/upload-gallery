@@ -1,5 +1,5 @@
 import { Modal} from "antd"
-import { parseToken } from "../../../store/modules/configStore";
+import { parseToken } from "@yuanjing/shared";
 import { useDispatch} from "react-redux";
 import { useEffect, useState ,useRef} from "react";
 import type { ChangeEvent} from "react";

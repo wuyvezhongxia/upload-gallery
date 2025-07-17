@@ -1,6 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import configReducer from './modules/configStore';
-import imageReducer from './modules/imageStore'
+import { configReducer, imageReducer } from '@yuanjing/shared';
 
 const store = configureStore({
     reducer:{

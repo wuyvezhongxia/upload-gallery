@@ -9,7 +9,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { generateUploadToken } from "../../../utils/qiniu";
-import { parseToken } from "../../../store/modules/configStore";
+import { parseToken } from "@yuanjing/shared";
 import { useDispatch } from "react-redux";
 import dayjs from "dayjs";
 // 定义表单值的类型

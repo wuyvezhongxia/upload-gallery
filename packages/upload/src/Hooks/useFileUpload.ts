@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { message } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { addImage } from "@/store/modules/imageStore";
+import { addImage } from "@yuanjing/shared";
 import { uploadFile } from "@/utils/qiniu";
 
 import { compressImage } from "@/utils/image";
 import { copyUrl,copyMd } from "@/utils/stringUtil";
 import type { RootState } from "@/store/index";
+import type { ConfigState } from "@yuanjing/shared";
 import {
   calculateCompressionPercentage,
   formatSize,
@@ -16,7 +17,7 @@ import type { UploadableFile } from "@/types/upload";
 
 export const useFileUpload = (config: any) => {
   const dispatch = useDispatch();
-  const { qiniu } = useSelector((state: RootState) => state.config);
+  const { qiniu } = useSelector((state: RootState) => (state.config as ConfigState));
   const [fileList, setFileList] = useState<UploadableFile[]>([]);
   const uploadingFiles = useRef(new Set<string>());
 

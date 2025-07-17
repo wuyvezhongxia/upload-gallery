@@ -12,6 +12,7 @@ import TokenKey from "./components/tokenKey"
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store";
 import dayjs from "dayjs";
+import type { ConfigState } from "@yuanjing/shared";
 
 type GenerateTokenProps = {
   show: boolean;
@@ -23,7 +24,9 @@ const GenerateToken = (props:GenerateTokenProps) => {
   const [isShow,setIsShow] = useState(false)
   const [showKey, setShowKey] = useState(false)
   const [remainingTime, setRemainingTime] = useState("");
-  const {qiniu}  = useSelector((state:RootState)=>state.config)
+  const { qiniu } = useSelector(
+    (state: RootState) => state.config as ConfigState
+  );
 
   useEffect(()=>{
     if(qiniu.date){

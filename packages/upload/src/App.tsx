@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { cleanExpiredImages } from "./store/modules/imageStore";
+import { cleanExpiredImages } from "@yuanjing/shared";
 import Header from "./pages/header";
 import UploadFile from "./pages/upload-file";
 import FileList from "./pages/picture-list";
