@@ -10,7 +10,7 @@ interface ImageListViewProps {
 const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
   return (
     <List
-      itemLayout="horizontal"
+      itemLayout="vertical"
       dataSource={imgList}
       renderItem={(item) => {
         // 将时间戳转换为可读日期
@@ -25,33 +25,36 @@ const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
         };
 
         return (
-          <List.Item>
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center', padding: '12px' }}>
-              <div style={{ marginRight: '20px', width: '120px', height: '80px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', backgroundColor: '#f0f2f5' }}>
+          <List.Item
+            style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+              <Typography.Title level={5} style={{ margin: '0 0 12px 0' }}>{item.name}</Typography.Title>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', backgroundColor: '#f5f5f5', padding: '16px' }}>
                 {item.url ? (
                   <Image
                     src={item.url}
                     alt={item.name}
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                    style={{ maxHeight: '300px', objectFit: 'contain' }}
                     preview={{ src: item.url }}
                   />
                 ) : (
-                  <FileImageOutlined style={{ fontSize: '32px', color: '#bfbfbf' }} />
+                  <FileImageOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />
                 )}
               </div>
               
-              <div style={{ flex: 1 }}>
-                <Typography.Title level={5} style={{ margin: 0 }}>{item.name}</Typography.Title>
-                <Space direction="vertical" size={2} style={{ marginTop: '8px' }}>
-                  <Typography.Text type="secondary">
+              <div style={{ marginTop: '8px' }}>
+                <Space direction="vertical" size={4}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography.Text type="secondary">拍摄时间: {formattedDate}</Typography.Text>
                     <Space>
-                      <span>拍摄时间: {formattedDate}</span>
                       <Tag color="blue">{formatSize(item.size)}</Tag>
                       {item.originSize && (
                         <Tag color="green">原始大小: {formatSize(item.originSize)}</Tag>
                       )}
                     </Space>
-                  </Typography.Text>
+                  </div>
                 </Space>
               </div>
             </div>
