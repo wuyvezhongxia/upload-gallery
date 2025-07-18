@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import type { ImageItem } from '@yuanjing/shared';
 import { FileImageOutlined, DownloadOutlined, HeartOutlined, CloseOutlined } from '@ant-design/icons';
+import 'react-lazy-load-image-component';
+// 导入自定义的颜色过渡效果CSS
+import '../effects/colorTransition.css';
+import ColorLazyImage from './ColorLazyImage';
 
 interface ImageGridViewProps {
   imgList?: ImageItem[];
@@ -9,6 +13,8 @@ interface ImageGridViewProps {
 const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
   // 添加状态来控制预览
   const [previewImage, setPreviewImage] = useState<ImageItem | null>(null);
+  // 添加状态跟踪图片加载
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   // 格式化文件大小
   const formatSize = (size: number) => {
@@ -35,6 +41,11 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
     setPreviewImage(null);
     // 恢复页面滚动
     document.body.style.overflow = 'auto';
+  };
+
+  // 处理图片加载完成
+  const handleImageLoad = (id: string) => {
+    setLoadedImages(prev => ({ ...prev, [id]: true }));
   };
 
   return (
@@ -170,19 +181,32 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
                   flex: 1,
                   overflow: 'hidden'
                 }}>
-                  <img
-                    src={item.url}
-                    alt={item.name}
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover',
-                      objectPosition: 'center',
-                      display: 'block',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => openPreview(item)}
-                  />
+                  {/* 替换为LazyLoadImage组件 */}
+                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                    <ColorLazyImage
+                      src={item.url}
+                      alt={item.name}
+                      threshold={100}
+                      delayTime={5000} // 5秒延迟
+                      afterLoad={() => handleImageLoad(item.id)}
+                      wrapperProps={{
+                        style: {
+                          width: '100%',
+                          height: '100%',
+                          display: 'block',
+                        }
+                      }}
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        display: 'block',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => openPreview(item)}
+                    />
+                  </div>
                   
                   {/* 悬停时显示的信息层 */}
                   <div className="image-overlay" style={{
@@ -294,6 +318,12 @@ const addGlobalStyle = () => {
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
+    }
+    
+    /* 懒加载图片样式 */
+    .lazy-load-image-background {
+      width: 100%;
+      height: 100%;
     }
   `;
   document.head.appendChild(styleElement);

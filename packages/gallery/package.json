@@ -11,7 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.1.0"
+    "color-thief-react": "^2.1.0",
+    "colorthief": "^2.6.0",
+    "react-dom": "^19.1.0",
+    "react-lazy-load-image-component": "^1.6.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

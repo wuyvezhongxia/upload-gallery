@@ -1,0 +1,8 @@
+.lazy-load-image-background.color-transition {
+  filter: hue-rotate(180deg) saturate(0.5);
+  transition: filter 0.5s ease-out;
+}
+
+.lazy-load-image-background.color-transition.lazy-load-image-loaded {
+  filter: hue-rotate(0deg) saturate(1);
+}

@@ -1,13 +1,25 @@
-import React from 'react';
-import { List, Typography, Space, Tag } from 'antd';
+import React, { useState } from 'react';
+import { List, Typography, Space, Tag} from 'antd';
 import type { ImageItem } from '@yuanjing/shared';
 import { FileImageOutlined } from '@ant-design/icons';
+import 'react-lazy-load-image-component';
+// 导入自定义的颜色过渡效果CSS
+import '../effects/colorTransition.css';
+import ColorLazyImage from './ColorLazyImage';
 
 interface ImageListViewProps {
   imgList?: ImageItem[];
 }
 
 const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
+  // 添加状态跟踪图片加载
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+
+  // 处理图片加载完成
+  const handleImageLoad = (id: number) => {
+    setLoadedImages(prev => ({ ...prev, [id.toString()]: true }));
+  };
+
   return (
     <List
       itemLayout="horizontal"
@@ -42,16 +54,27 @@ const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
                 flexShrink: 0
               }}>
                 {item.url ? (
-                  <img
-                    src={item.url}
-                    alt={item.name}
-                    style={{ 
-                      width: '100%',
-                      height: 'auto',
-                      objectFit: 'cover',
-                      borderRadius: '4px'
-                    }}
-                  />
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <ColorLazyImage
+                      src={item.url}
+                      alt={item.name}
+                      threshold={100}
+                      delayTime={5000} // 5秒延迟
+                      afterLoad={() => handleImageLoad(item.id)}
+                      wrapperProps={{
+                        style: {
+                          width: '100%',
+                          display: 'block',
+                        }
+                      }}
+                      style={{ 
+                        width: '100%',
+                        height: 'auto',
+                        objectFit: 'cover',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div style={{ 
                     height: '320px', 
