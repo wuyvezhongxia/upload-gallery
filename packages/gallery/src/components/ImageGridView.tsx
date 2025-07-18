@@ -22,20 +22,37 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
   };
 
   return (
-    <div className="masonry-grid" style={{
+    <div className="image-grid" style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
       gridGap: '16px',
-      gridAutoFlow: 'dense'
+      gridAutoRows: '250px' // 设置固定高度
     }}>
       {imgList.map((item) => (
-        <div key={item.id} className="masonry-item" style={{ display: 'inline-block', position: 'relative' }}>
+        <div key={item.id} className="grid-item" style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
           {item.url ? (
-            <div style={{ position: 'relative', display: 'inline-block' }}>
+            <div style={{ 
+              position: 'relative', 
+              flex: 1,
+              overflow: 'hidden'
+            }}>
               <img
                 src={item.url}
                 alt={item.name}
-                style={{ display: 'block', width: '100%', height: 'auto' }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover', // 保持图片比例并填充容器
+                  objectPosition: 'center',
+                  display: 'block'
+                }}
                 onClick={() => {
                   // 使用原生方法打开图片预览
                   const img = new Image();
@@ -105,7 +122,7 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
               </div>
             </div>
           ) : (
-            <div style={{ height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f2f5' }}>
+            <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f2f5' }}>
               <FileImageOutlined style={{ fontSize: '32px', color: '#bfbfbf' }} />
             </div>
           )}
@@ -119,19 +136,21 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
 const addGlobalStyle = () => {
   const styleElement = document.createElement('style');
   styleElement.innerHTML = `
-    .masonry-item:hover .image-overlay {
+    .grid-item:hover .image-overlay {
       opacity: 1 !important;
     }
     
     /* 响应式布局 */
     @media (max-width: 768px) {
-      .masonry-grid {
+      .image-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+        grid-auto-rows: 200px !important;
       }
     }
     @media (max-width: 480px) {
-      .masonry-grid {
+      .image-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+        grid-auto-rows: 150px !important;
       }
     }
   `;
