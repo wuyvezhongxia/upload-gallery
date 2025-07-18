@@ -1,5 +1,5 @@
 import React from 'react';
-import { List, Image, Typography, Space, Tag } from 'antd';
+import { List, Typography, Space, Tag } from 'antd';
 import type { ImageItem } from '@yuanjing/shared';
 import { FileImageOutlined } from '@ant-design/icons';
 
@@ -10,7 +10,7 @@ interface ImageListViewProps {
 const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
   return (
     <List
-      itemLayout="vertical"
+      itemLayout="horizontal"
       dataSource={imgList}
       renderItem={(item) => {
         // 将时间戳转换为可读日期
@@ -26,34 +26,65 @@ const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
 
         return (
           <List.Item
-            style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}
+            style={{ 
+              padding: '16px', 
+              borderBottom: '1px solid #f0f0f0'
+            }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-              <Typography.Title level={5} style={{ margin: '0 0 12px 0' }}>{item.name}</Typography.Title>
-              
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', backgroundColor: '#f5f5f5', padding: '16px' }}>
+            <div style={{ 
+              display: 'flex', 
+              width: '100%',
+              gap: '24px'
+            }}>
+              {/* 左侧图片区域 - 增加宽度到80% */}
+              <div style={{ 
+                width: '80%',
+                flexShrink: 0
+              }}>
                 {item.url ? (
-                  <Image
+                  <img
                     src={item.url}
                     alt={item.name}
-                    style={{ maxHeight: '300px', objectFit: 'contain' }}
-                    preview={{ src: item.url }}
+                    style={{ 
+                      width: '100%',
+                      height: 'auto',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
                   />
                 ) : (
-                  <FileImageOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />
+                  <div style={{ 
+                    height: '320px', 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    backgroundColor: '#f9f9f9',
+                    borderRadius: '4px'
+                  }}>
+                    <FileImageOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />
+                  </div>
                 )}
               </div>
               
-              <div style={{ marginTop: '8px' }}>
-                <Space direction="vertical" size={4}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography.Text type="secondary">拍摄时间: {formattedDate}</Typography.Text>
-                    <Space>
-                      <Tag color="blue">{formatSize(item.size)}</Tag>
-                      {item.originSize && (
-                        <Tag color="green">原始大小: {formatSize(item.originSize)}</Tag>
-                      )}
-                    </Space>
+              {/* 右侧信息区域 */}
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'flex-start',
+                flex: 1,
+                padding: '8px 0'
+              }}>
+                <Typography.Title level={5} style={{ margin: '0 0 8px 0' }}>{item.name}</Typography.Title>
+                
+                <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                  <Typography.Text type="secondary">拍摄时间: {formattedDate}</Typography.Text>
+                  <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Tag color="blue" style={{ width: 'fit-content' }}>{formatSize(item.size)}</Tag>
+                    {item.originSize && (
+                      <Tag color="green" style={{ width: 'fit-content' }}>
+                        原始大小: {formatSize(item.originSize)}
+                      </Tag>
+                    )}
                   </div>
                 </Space>
               </div>
