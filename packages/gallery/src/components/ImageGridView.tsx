@@ -208,64 +208,7 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
                     />
                   </div>
                   
-                  {/* 悬停时显示的信息层 */}
-                  <div className="image-overlay" style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // 稍微透明一些
-                    color: 'white',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: '16px',
-                    textAlign: 'center',
-                  }}>
-                    <h4 style={{ color: 'white', margin: '0 0 8px 0', fontSize: '16px' }}>
-                      {item.name}
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-                        {formatDate(item.date)}
-                      </span>
-                      <span style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-                        {formatSize(item.size)}
-                      </span>
-                    </div>
-                    <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                      <button style={{
-                        backgroundColor: '#1677ff',
-                        color: 'white',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        <DownloadOutlined /> 下载
-                      </button>
-                      <button style={{
-                        backgroundColor: '#ff4d4f',
-                        color: 'white',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        <HeartOutlined /> 收藏
-                      </button>
-                    </div>
-                  </div>
+                  {/* 移除悬停时显示的信息层 */}
                 </div>
               ) : (
                 <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f2f5' }}>
@@ -287,7 +230,8 @@ const addGlobalStyle = () => {
     body {
       margin: 0;
       padding: 0;
-      background-color: #f8f9fa;
+      /* 移除背景色设置，让 ViewTools 中的设置生效 */
+      /* background-color: #f8f9fa; */
     }
     
     .grid-item:hover {
@@ -295,9 +239,7 @@ const addGlobalStyle = () => {
       box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
     
-    .grid-item:hover .image-overlay {
-      opacity: 1 !important;
-    }
+    /* 移除遮罩层悬停效果 */
     
     /* 响应式布局 */
     @media (max-width: 1024px) {

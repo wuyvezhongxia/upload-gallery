@@ -7,7 +7,7 @@ import 'react-lazy-load-image-component/src/effects/blur.css';
 interface ColorLazyImageProps {
   src: string;
   alt: string;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void; // 修改这里，传递事件对象
   style?: React.CSSProperties;
   wrapperProps?: any;
   threshold?: number;
@@ -81,7 +81,7 @@ const ColorLazyImage: React.FC<ColorLazyImageProps> = ({
           transition: 'opacity 1.5s ease-in-out',
           ...(isLoaded ? { opacity: 1 } : {}),
         }}
-        onClick={onClick}
+        onClick={onClick} // 这里会传递事件对象
         placeholder={
           <div style={{
             width: '100%',

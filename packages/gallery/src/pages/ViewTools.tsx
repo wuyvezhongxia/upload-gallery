@@ -26,15 +26,15 @@ const ViewTools: React.FC<ViewToolsProps> = ({ imgList = [] }) => {
 
   // 根据主题模式更改背景色
   useEffect(() => {
-    // 直接设置文档背景色，使用!important确保优先级
+    // 直接设置文档背景色，使用更高优先级确保覆盖其他样式
     if (themeMode === 'light') {
-      document.body.setAttribute('style', 'background-color: #ffffff !important');
+      document.body.style.cssText = 'background-color: #ffffff !important';
     } else if (themeMode === 'dark') {
-      document.body.setAttribute('style', 'background-color: #1f1f1f !important');
+      document.body.style.cssText = 'background-color: #312c33 !important';
     } else {
       // 系统主题，根据系统偏好设置
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.body.setAttribute('style', `background-color: ${prefersDark ? '#1f1f1f' : '#ffffff'} !important`);
+      document.body.style.cssText = `background-color: ${prefersDark ? '#312c33' : '#ffffff'} !important`;
     }
     
     // 同时设置类名，以便可以通过CSS进一步控制样式
