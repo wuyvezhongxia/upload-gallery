@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ImageItem } from '@yuanjing/shared';
-import { FileImageOutlined, DownloadOutlined, HeartOutlined, CloseOutlined } from '@ant-design/icons';
+import { FileImageOutlined, DownloadOutlined,CloseOutlined } from '@ant-design/icons';
 import 'react-lazy-load-image-component';
 // 导入自定义的颜色过渡效果CSS
 import '../effects/colorTransition.css';
@@ -14,7 +14,7 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
   // 添加状态来控制预览
   const [previewImage, setPreviewImage] = useState<ImageItem | null>(null);
   // 添加状态跟踪图片加载
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [, setLoadedImages] = useState<Record<string, boolean>>({});
 
   // 格式化文件大小
   const formatSize = (size: number) => {
@@ -44,7 +44,7 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
   };
 
   // 处理图片加载完成
-  const handleImageLoad = (id: string) => {
+  const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));
   };
 

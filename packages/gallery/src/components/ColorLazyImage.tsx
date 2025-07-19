@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect} from 'react';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Spin } from 'antd';
 import ColorThief from 'colorthief';
@@ -9,7 +9,7 @@ interface ColorLazyImageProps {
   alt: string;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void; // 修改这里，传递事件对象
   style?: React.CSSProperties;
-  wrapperProps?: any;
+  wrapperProps?: React.HTMLAttributes<HTMLDivElement>;
   threshold?: number;
   delayTime?: number;
   afterLoad?: () => void;
@@ -27,7 +27,6 @@ const ColorLazyImage: React.FC<ColorLazyImageProps> = ({
 }) => {
   const [dominantColor, setDominantColor] = useState<string>('#f0f2f5'); // 默认背景色
   const [isLoaded, setIsLoaded] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
 
   // 提前加载小图并提取主色调
   useEffect(() => {

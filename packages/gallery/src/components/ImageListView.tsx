@@ -13,7 +13,7 @@ interface ImageListViewProps {
 
 const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
   // 添加状态跟踪图片加载
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [, setLoadedImages] = useState<Record<string, boolean>>({});
 
   // 处理图片加载完成
   const handleImageLoad = (id: number) => {
