@@ -3,7 +3,7 @@ import imageCompression from "browser-image-compression";
 import UPNG from 'upng-js'
 import type { CompressOptions } from "../types/compressOptions";
 import Compressor from "compressorjs";
-import { dataURLtoFile, calculateCompressionPercentage, formatSize } from "./transform";
+import { dataURLtoFile, calculateCompressionPercentage} from "./transform";
 import { compressImageFile, resetTinyPngStatus, getTinyPngStatus } from '@yuanjing/tinypng-plugin';
 
 // 扩展压缩选项接口，添加进度回调
@@ -39,11 +39,6 @@ async function compressImage(file: File, ops: ExtendedCompressOptions = {}): Pro
             
             // 计算压缩率
             const compressionRate = calculateCompressionPercentage(file.size, compressedFile.size);
-            const originalSizeStr = formatSize(file.size);
-            const compressedSizeStr = formatSize(compressedFile.size);
-            
-            console.log(`✅ TinyPNG 压缩成功: ${file.size} → ${compressedFile.size} bytes`);
-            console.log(`📊 压缩率: ${compressionRate}% (${originalSizeStr} → ${compressedSizeStr})`);
             
             onProgress?.(100, `TinyPNG 压缩完成！压缩率: ${compressionRate}%`);
             
@@ -55,7 +50,6 @@ async function compressImage(file: File, ops: ExtendedCompressOptions = {}): Pro
             
             // 如果是配额用完，记录状态
             if (error.message === 'QUOTA_EXHAUSTED') {
-                console.warn('🚫 TinyPNG 配额已用完，切换到本地压缩');
                 onProgress?.(0, 'TinyPNG 配额已用完，使用本地压缩...');
             }
         }
@@ -110,13 +104,6 @@ async function localCompress(file: File, ops: ExtendedCompressOptions = {}): Pro
     if (!noCompressIfLarger) {
         return newFile;
     }
-    
-    const compressionRate = calculateCompressionPercentage(file.size, newFile.size);
-    console.log('本地压缩结果:', {
-        original: file.size,
-        compressed: newFile.size,
-        ratio: `${compressionRate}%`
-    });
     
     return file.size > newFile.size ? newFile : file;
 }

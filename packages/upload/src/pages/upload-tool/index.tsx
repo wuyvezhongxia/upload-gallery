@@ -31,7 +31,6 @@ const UploadTool = () => {
   }, [config]);
 
   const handleMenuClick: MenuProps["onClick"] = (e) => {
-    console.log("click", e);
     const newCopyType = e.key === "1" ? "Markdown" : "链接";
     setSelectedValue(newCopyType);
     updateConfig({ copyType: newCopyType });

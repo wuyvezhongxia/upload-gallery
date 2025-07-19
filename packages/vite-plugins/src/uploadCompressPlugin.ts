@@ -66,7 +66,6 @@ export async function compressWithTinyPng(
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`📤 上传进度: ${percentCompleted}%`);
         }
       }
     });
@@ -118,7 +117,6 @@ export async function compressImageFile(
     // 检查缓存
     const cacheKey = generateCacheKey(new Uint8Array(buffer));
     if (enableCache && compressionCache.has(cacheKey)) {
-      console.log('✅ 使用缓存的 TinyPNG 压缩结果');
       const cachedBuffer = compressionCache.get(cacheKey)!;
       return new File([cachedBuffer], file.name, { type: file.type });
     }
@@ -130,24 +128,9 @@ export async function compressImageFile(
       compressionCache.set(cacheKey, compressedBuffer);
     }
     
-    const compressedFile = new File([compressedBuffer], file.name, { type: file.type });
-    
-    console.log(
-      `✅ TinyPNG 压缩成功: ${file.size} → ${compressedFile.size} bytes ` +
-      `(${((compressedFile.size / file.size) * 100).toFixed(1)}%)`
-    );
-    
+    const compressedFile = new File([compressedBuffer], file.name, { type: file.type })
     return compressedFile;
   } catch (error: any) {
-    // 详细的错误日志
-    console.error('❌ TinyPNG 压缩详细错误:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      config: error.config?.url
-    });
-    
-    // 重新抛出错误，但确保错误消息清晰
     if (error.response?.status === 429) {
       throw new Error('QUOTA_EXHAUSTED');
     } else if (error.response?.status === 401) {
@@ -188,7 +171,6 @@ function isSupportedImageType(contentType: string): boolean {
 // 工具函数
 export function resetTinyPngStatus(): void {
   tinyPngStatus.reset();
-  console.log('🔄 TinyPNG 状态已重置');
 }
 
 export function getTinyPngStatus(): { quotaExhausted: boolean } {

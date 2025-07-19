@@ -24,8 +24,6 @@ app.post('/api/tinypng/compress', async (req, res) => {
   
   const compressWithRetry = async () => {
     try {
-      console.log(`📤 收到压缩请求，文件大小: ${req.body.length} bytes${retryCount > 0 ? ` (重试 ${retryCount})` : ''}`);
-      
       // 第一步：上传到 TinyPNG
       const uploadResponse = await axios({
         method: 'post',
@@ -42,9 +40,6 @@ app.post('/api/tinypng/compress', async (req, res) => {
         maxContentLength: Infinity,
         maxBodyLength: Infinity
       });
-      
-      console.log('✅ TinyPNG 处理成功，压缩率:', 
-        Math.round((uploadResponse.data.output.size / req.body.length) * 100) + '%');
       
       // 第二步：下载压缩后的文件
       const downloadResponse = await axios({
@@ -80,7 +75,6 @@ app.post('/api/tinypng/compress', async (req, res) => {
   try {
     await compressWithRetry();
   } catch (error) {
-    console.error('❌ TinyPNG 压缩失败:', error.message);
     
     // 检查错误类型
     if (error.response?.status === 429) {

@@ -48,7 +48,6 @@ async function compressWithTinyPng(buffer, proxyUrl = "http://localhost:3001/api
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round(progressEvent.loaded * 100 / progressEvent.total);
-          console.log(`\u{1F4E4} \u4E0A\u4F20\u8FDB\u5EA6: ${percentCompleted}%`);
         }
       }
     });
@@ -82,7 +81,6 @@ async function compressImageFile(file, options = {}) {
     const buffer = await file.arrayBuffer();
     const cacheKey = generateCacheKey(new Uint8Array(buffer));
     if (enableCache && compressionCache.has(cacheKey)) {
-      console.log("\u2705 \u4F7F\u7528\u7F13\u5B58\u7684 TinyPNG \u538B\u7F29\u7ED3\u679C");
       const cachedBuffer = compressionCache.get(cacheKey);
       return new File([cachedBuffer], file.name, { type: file.type });
     }
@@ -91,17 +89,8 @@ async function compressImageFile(file, options = {}) {
       compressionCache.set(cacheKey, compressedBuffer);
     }
     const compressedFile = new File([compressedBuffer], file.name, { type: file.type });
-    console.log(
-      `\u2705 TinyPNG \u538B\u7F29\u6210\u529F: ${file.size} \u2192 ${compressedFile.size} bytes (${(compressedFile.size / file.size * 100).toFixed(1)}%)`
-    );
     return compressedFile;
   } catch (error) {
-    console.error("\u274C TinyPNG \u538B\u7F29\u8BE6\u7EC6\u9519\u8BEF:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      config: error.config?.url
-    });
     if (error.response?.status === 429) {
       throw new Error("QUOTA_EXHAUSTED");
     } else if (error.response?.status === 401) {
@@ -134,7 +123,6 @@ function isSupportedImageType(contentType) {
 }
 function resetTinyPngStatus() {
   tinyPngStatus.reset();
-  console.log("\u{1F504} TinyPNG \u72B6\u6001\u5DF2\u91CD\u7F6E");
 }
 function getTinyPngStatus() {
   return {

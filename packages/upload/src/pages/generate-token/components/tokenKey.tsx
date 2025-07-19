@@ -70,7 +70,6 @@ const TokenKey = (props:TokenKeyProps) => {
 
     const onChange = (changedValues:FormValues, allValues:FormValues) => {
       setFormValue(allValues);
-      console.log(formValue);
     };
 
     const onFinish = async (values: FormValues) => {
@@ -99,7 +98,6 @@ const TokenKey = (props:TokenKeyProps) => {
     const validateSecretKey = (_:object, value: string) => {
       const accessKey = form.getFieldValue("accessKey");
       if (value && value === accessKey) {
-        console.log(value);
         return Promise.reject(new Error("Access Key 和 Secret Key 不能相同"));
       }
       return Promise.resolve();
