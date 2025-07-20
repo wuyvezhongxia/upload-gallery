@@ -51,7 +51,8 @@ const ImageListView: React.FC<ImageListViewProps> = ({ imgList = [] }) => {
               {/* 左侧图片区域 - 增加宽度到80% */}
               <div style={{ 
                 width: '80%',
-                flexShrink: 0
+                flexShrink: 0,
+                minHeight: '320px', // 添加最小高度
               }}>
                 {item.url ? (
                   <div style={{ position: 'relative', width: '100%' }}>

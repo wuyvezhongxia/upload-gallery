@@ -1,5 +1,5 @@
-import { Button, Pagination, ConfigProvider, Modal } from "antd";
-import type { PaginationProps } from "antd";
+import { Button, Pagination, ConfigProvider, Modal, Radio } from "antd";
+import type { PaginationProps, RadioChangeEvent } from "antd";
 import "./index.scss";
 import zhCN from "antd/locale/zh_CN";
 import { useSelector } from "react-redux";
@@ -9,6 +9,11 @@ import { fomatData, copyUrl, copyMd } from "@/utils/stringUtil";
 import type { ImageItem } from "@yuanjing/shared";
 import { useState } from "react";
 import { useUploadConfig } from "@/Hooks/upload";
+import { AppstoreOutlined, BarsOutlined, UnorderedListOutlined } from "@ant-design/icons";
+import { ImageListView, ImageGridView } from "@yuanjing/gallery";
+
+// 定义显示模式类型
+type DisplayMode = "list" | "gallery-list" | "gallery-grid";
 
 const FileList = () => {
   const { imgList } = useSelector((state: RootState) => state.image);
@@ -16,6 +21,7 @@ const FileList = () => {
   const [currentImg, setCurrentImg] = useState<ImageItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const { config, updateConfig } = useUploadConfig();
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("list");
 
   const onShowSizeChange: PaginationProps["onShowSizeChange"] = (
     current,
@@ -46,15 +52,21 @@ const FileList = () => {
   const endIndex = startIndex + config.pageSize;
   const currentPageData = imgList.slice(startIndex, endIndex);
 
-  return (
-    <ConfigProvider locale={zhCN}>
-      <div className="listContainer">
-        <p className="top">历史上传记录 ↓（本地存储）</p>
-        {imgList.length === 0 ? (
-          <div className="empty-state">
-            <p>暂无上传记录</p>
-          </div>
-        ) : (
+  // 处理显示模式变化
+  const handleDisplayModeChange = (e: RadioChangeEvent) => {
+    setDisplayMode(e.target.value);
+  };
+
+  // 渲染当前选择的显示模式内容
+  const renderDisplayContent = () => {
+    switch (displayMode) {
+      case "gallery-list":
+        return <ImageListView imgList={currentPageData} />;
+      case "gallery-grid":
+        return <ImageGridView imgList={currentPageData} />;
+      case "list":
+      default:
+        return (
           <ul className="file-list">
             {currentPageData.map((item, index) => (
               <li key={startIndex + index}>
@@ -81,19 +93,52 @@ const FileList = () => {
               </li>
             ))}
           </ul>
+        );
+    }
+  };
+
+  return (
+    <ConfigProvider locale={zhCN}>
+      <div className="listContainer">
+        <p className="top">历史上传记录 ↓（本地存储）</p>
+        {imgList.length === 0 ? (
+          <div className="empty-state">
+            <p>暂无上传记录</p>
+          </div>
+        ) : (
+          <>
+            {/* 添加显示模式切换 */}
+            <div className="display-mode-selector">
+              <Radio.Group onChange={handleDisplayModeChange} value={displayMode}>
+                <Radio.Button value="list">
+                  <UnorderedListOutlined /> 列表
+                </Radio.Button>
+                <Radio.Button value="gallery-list">
+                  <BarsOutlined /> 画廊列表
+                </Radio.Button>
+                <Radio.Button value="gallery-grid">
+                  <AppstoreOutlined /> 画廊网格
+                </Radio.Button>
+              </Radio.Group>
+            </div>
+            
+            {/* 根据选择的显示模式渲染内容 */}
+            {renderDisplayContent()}
+            
+            <div className="pagination">
+              <Pagination
+                total={imgList.length}
+                showTotal={(total) => `共 ${total} 条`}
+                onShowSizeChange={onShowSizeChange}
+                onChange={onPageChange}
+                current={currentPage}
+                pageSize={config.pageSize}
+                showSizeChanger={true}
+                pageSizeOptions={["10", "20", "50", "100", "200"]}
+              />
+            </div>
+          </>
         )}
-        <div className="pagination">
-          <Pagination
-            total={imgList.length}
-            showTotal={(total) => `共 ${total} 条`}
-            onShowSizeChange={onShowSizeChange}
-            onChange={onPageChange}
-            current={currentPage}
-            pageSize={config.pageSize}
-            showSizeChanger={true}
-            pageSizeOptions={["10", "20", "50", "100", "200"]}
-          />
-        </div>
 
         <Modal
           title="图片信息"

@@ -19,14 +19,22 @@
       gap: 10px;
 
       button, .ant-btn {
-        width: 80px;
-        height: 30px;
-        border-radius: 20px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         font-size: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0;
+      }
+      
+      .theme-btn {
+        &.active {
+          background-color: #1677ff;
+          color: white;
+          border-color: #1677ff;
+        }
       }
     }
 }

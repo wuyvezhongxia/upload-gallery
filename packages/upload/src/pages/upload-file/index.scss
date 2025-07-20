@@ -1,16 +1,19 @@
 .upload-container{
-    width: 100%;
-    padding-top:10px;
-    border:1px dashed #ccc;
+    width: 80%; /* 修改宽度为80%，两侧留出缝隙 */
+    margin: 0 auto; /* 居中显示 */
+    padding-top: 10px;
+    border: 1px dashed #ccc;
     background: #f5f5f5;
+    border-radius: 8px; /* 添加圆角使其更美观 */
     &:hover{
-        border:1px dashed #409eff;  
+        border: 1px dashed #409eff;  
     }
 }
 
 .ant-upload-wrapper .ant-upload-drag{
     border: none!important;
     background-color: #f5f5f5;
+    padding: 10px 0; /* 减小上下内边距使其更短 */
 }
 
 #paste-area{

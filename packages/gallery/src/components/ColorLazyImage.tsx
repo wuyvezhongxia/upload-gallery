@@ -37,6 +37,10 @@ const ColorLazyImage: React.FC<ColorLazyImageProps> = ({
         const colorThief = new ColorThief();
         const color = colorThief.getColor(img);
         setDominantColor(`rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+        
+        // 预加载实际图片
+        const fullImg = new Image();
+        fullImg.src = src; // 直接加载原始图片
       } catch (error) {
         console.error('提取颜色失败:', error);
       }
@@ -81,19 +85,18 @@ const ColorLazyImage: React.FC<ColorLazyImageProps> = ({
           ...(isLoaded ? { opacity: 1 } : {}),
         }}
         onClick={onClick} // 这里会传递事件对象
-        placeholder={
-          <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: dominantColor,
-            transition: 'background-color 1.5s ease-in-out',
-          }}>
-            <Spin size="large" />
-          </div>
-        }
+        placeholder={<div style={{
+          width: '100%',
+          height: '100%',
+          minHeight: style?.height || '320px', // 确保占位符高度与最终图片一致
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: dominantColor,
+          transition: 'background-color 1.5s ease-in-out',
+        }}>
+          <Spin size="large" />
+        </div>}
       />
     </div>
   );

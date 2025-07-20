@@ -157,12 +157,12 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
         <div className="image-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)', // 固定为3列
-          columnGap: '40px', // 增加左右间距，从20px改为40px
+          columnGap: '40px', // 增加左右间距
           rowGap: '16px',    // 保持上下间距不变
           gridAutoRows: '280px', // 保持高度不变
-          width: '100%', // 使用100%宽度
+          width: '100%', // 使用100%宽度，相对于父容器
           maxWidth: '100%', // 移除最大宽度限制
-          padding: '0 24px' // 增加内边距
+          padding: '0' // 移除内边距
         }}>
           {imgList.map((item) => (
             <div key={item.id} className="grid-item" style={{ 
