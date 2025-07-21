@@ -11,8 +11,7 @@ export const copyRes = (text:string,msg = '结果已成功复制到剪贴板')=>
       }
     })
     .catch((err:any) => {
-      console.log(err);
-      message.warning("不支持自动复制，请手动选择复制");
+      console.log(err, "不支持自动复制，请手动选择复制");
     });
 }
 
