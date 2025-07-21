@@ -1,16 +1,42 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
+
+// 根据NODE_ENV加载对应的环境变量
+const NODE_ENV = process.env.NODE_ENV || 'development';
+require('dotenv').config({
+  path: path.resolve(__dirname, `.env.${NODE_ENV}`)
+});
+// 加载基础环境变量
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// 获取当前环境的API URL
+const API_URL = process.env.VITE_TINYPNG_PROXY_URL || `http://localhost:${PORT}`;
+
+// 根据环境确定允许的前端域名 
+const allowedOrigins = NODE_ENV === 'production' 
+  ? ['http://192.168.10.8:5173', 'http://192.168.10.8:3000', 'http://192.168.10.8'] 
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost']; 
+
 // 中间件
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // 允许的前端域名
+  origin: function(origin, callback) {
+    // 允许没有origin的请求（如移动应用或Postman）
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))) {
+      callback(null, true);
+    } else {
+      callback(new Error('不允许的跨域请求'));
+    }
+  },
   credentials: true
 }));
+
 // 解析二进制，并挂载道request.body
 app.use(express.raw({ 
   type: 'application/octet-stream', 
@@ -108,12 +134,14 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    apiKeyConfigured: !!process.env.TINYPNG_API_KEY
+    apiKeyConfigured: !!process.env.TINYPNG_API_KEY,
+    environment: NODE_ENV
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 代理服务器启动成功: http://localhost:${PORT}`);
-  console.log(`📋 健康检查: http://localhost:${PORT}/health`);
+  console.log(`🚀 代理服务器启动成功: ${API_URL}`);
+  console.log(`📋 健康检查: ${API_URL}/health`);
   console.log(`🔑 API Key 状态:`, process.env.TINYPNG_API_KEY ? '已配置' : '未配置');
+  console.log(`🌍 当前环境: ${NODE_ENV}`);
 });
