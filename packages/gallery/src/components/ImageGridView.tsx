@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ImageItem } from '@yuanjing/shared';
-import { FileImageOutlined, DownloadOutlined,CloseOutlined } from '@ant-design/icons';
+import { FileImageOutlined, CloseOutlined } from '@ant-design/icons';
 import 'react-lazy-load-image-component';
 // 导入自定义的颜色过渡效果CSS
 import '../effects/colorTransition.css';
@@ -136,19 +136,6 @@ const ImageGridView: React.FC<ImageGridViewProps> = ({ imgList = [] }) => {
                 <div>{formatDate(previewImage.date)}</div>
                 <div>{formatSize(previewImage.size)}</div>
               </div>
-              <button style={{
-                backgroundColor: '#1677ff',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <DownloadOutlined /> 下载
-              </button>
             </div>
           </div>
         )}
