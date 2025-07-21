@@ -36,6 +36,7 @@
     }
 }
 
+// 修改进度条容器样式，使内容在同一行显示
 .upload-progress-container {
   margin-top: 16px;
   
@@ -44,104 +45,289 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    border: none !important; // 移除所有边框
     
     &:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
-    // 不同状态的卡片样式
+    // 不同状态的卡片样式 - 完全移除边框，只保留背景色
     &.compressing {
-      border-left: 4px solid #1890ff;
+      border-left: none;
+      border-top: none; // 移除顶部边框
       background: #f0f8ff;
     }
     
     &.uploading {
-      border-left: 4px solid #52c41a;
+      border-left: none;
+      border-top: none; // 移除顶部边框
       background: #f6ffed;
     }
     
     &.success {
-      border-left: 4px solid #52c41a;
+      border-left: none;
+      border-top: none; // 移除顶部边框
       background: #f6ffed;
     }
     
     &.error {
-      border-left: 4px solid #ff4d4f;
+      border-left: none;
+      border-top: none; // 移除顶部边框
       background: #fff2f0;
     }
     
+    // 确保卡片内部没有边框
+    .ant-card-head {
+      border-bottom: none;
+    }
+    
+    .ant-card-body {
+      padding: 12px !important;
+      border: none;
+    }
+    
+    // 文件信息布局 - 同一行显示
     .file-info {
-      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 4px;
       
-      .file-details {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
+      .file-name {
+        flex: 0 0 25%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 500;
+        padding-right: 10px;
+      }
+      
+      .ant-progress {
+        flex: 1;
+        margin: 0 10px;
+        padding: 0;
         
-        .file-name-container {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex: 1;
-          overflow: hidden;
-          margin-right: 12px;
+        &.ant-progress-line {
+          margin: 0;
+          padding: 0;
+          line-height: 1;
           
-          .file-name {
-            font-weight: 500;
-            color: #333;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-          
-          .compress-text {
-            font-size: 11px;
-            color: #999;
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            flex-shrink: 0;
-          }
-        }
-        
-        .file-status {
-          font-size: 12px;
-          color: #666;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          
-          .anticon {
-            animation: spin 1s linear infinite;
+          .ant-progress-outer {
+            margin: 0;
+            padding: 0;
+            
+            .ant-progress-inner {
+              background-color: #f5f5f5;
+              border-radius: 0; // 移除圆角
+              height: 4px !important;
+              
+              .ant-progress-bg {
+                height: 4px !important;
+                border-radius: 0; // 移除圆角
+              }
+            }
           }
         }
       }
       
-      .compress-info {
-        margin-top: 4px;
-        
-        .compress-text {
-          font-size: 11px;
-          color: #999;
-          background: #f0f0f0;
-          padding: 2px 6px;
-          border-radius: 4px;
-          display: inline-block;
-        }
+      .file-status {
+        flex: 0 0 20%;
+        text-align: right;
+        white-space: nowrap;
+        font-size: 12px;
+        color: #666;
       }
+    }
+    
+    // 压缩信息样式
+    .compress-info {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
     }
   }
 }
 
-// 加载动画
-@keyframes spin {
+// 为上传中的进度条添加微妙的动画效果
+.upload-progress-item.uploading .ant-progress-bg {
+  animation: progressPulse 2s infinite;
+}
+
+@keyframes progressPulse {
   0% {
-    transform: rotate(0deg);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
   }
   100% {
-    transform: rotate(360deg);
+    opacity: 0.8;
   }
 }
+
+.ant-progress {
+  &.ant-progress-line {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    
+    .ant-progress-outer {
+      margin: 0;
+      padding: 0;
+      
+      .ant-progress-inner {
+        background-color: #f5f5f5;
+        border-radius: 0; // 移除圆角
+        height: 6px !important;
+        overflow: visible; // 允许内容溢出，以便百分比显示在外部
+        
+        .ant-progress-bg {
+          height: 6px !important;
+          border-radius: 0; // 移除圆角
+          transition: all 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
+        }
+      }
+    }
+    
+    // 调整进度文字的位置和大小
+    .ant-progress-text {
+      font-size: 12px;
+      color: #666;
+      position: absolute;
+      right: 0;
+      top: -20px; // 将文字上移
+      margin: 0;
+      padding: 0;
+    }
+  }
+}
+
+// 调整Card组件内部的样式
+.upload-progress-item {
+  .ant-card-body {
+    padding: 12px 12px 0 12px !important; // 移除底部内边距，保留其他方向的内边距
+    
+    .ant-progress {
+      margin: 0;
+      position: relative;
+      bottom: -1px; // 使进度条与卡片底部完全贴合
+    }
+  }
+  
+  // 移除卡片底部边框
+  border-bottom: none;
+  
+  // 确保卡片底部没有多余空间
+  margin-bottom: 12px;
+}
+
+// 确保进度条容器没有多余空间
+.upload-progress-container {
+  .upload-progress-item:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 文件名区域样式 - 修改为横向排列
+.file-name-area {
+  display: flex;
+  flex-direction: row; // 改为横向排列
+  align-items: center; // 垂直居中对齐
+  flex: 0 0 30%;
+  min-width: 150px;
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  .file-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 5px; // 文件名和压缩信息之间的间距
+    max-width: 70%; // 文件名最多占区域的70%
+  }
+  
+  .compress-info {
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// 文件名包装器样式
+.file-name-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 0 0 30%;
+  min-width: 150px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  .file-name {
+    font-weight: 500;
+    max-width: 100px; // 固定最大宽度
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+  }
+  
+  .tiny-compress-status {
+    font-size: 12px;
+    color: #1890ff;
+    margin-left: 5px;
+    white-space: nowrap;
+  }
+}
+
+// 文件信息布局 - 同一行显示
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 4px;
+  
+  .ant-progress {
+    flex: 1;
+    margin: 0 10px;
+    padding: 0;
+    min-width: 150px; // 设置最小宽度确保进度条足够长
+    
+    &.ant-progress-line {
+      margin: 0;
+      padding: 0;
+      line-height: 1;
+      
+      .ant-progress-outer {
+        margin: 0;
+        padding: 0;
+        
+        .ant-progress-inner {
+          background-color: #f5f5f5;
+          border-radius: 0; // 移除圆角
+          height: 4px !important;
+          
+          .ant-progress-bg {
+            height: 4px !important;
+            border-radius: 0; // 移除圆角
+          }
+        }
+      }
+    }
+  }
+  
+  .file-status {
+    flex: 0 0 20%;
+    text-align: right;
+    } // 添加这个右花括号
+    white-space: nowrap;
+    font-size: 12px;
+    color: #666;
+  }
 

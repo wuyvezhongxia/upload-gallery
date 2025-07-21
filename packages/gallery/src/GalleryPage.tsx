@@ -8,7 +8,7 @@ export interface GalleryPageProps {
 
 const GalleryPage: React.FC<GalleryPageProps> = ({ imgList }) => {
   return (
-    <div style={{ padding: 24, background: '#fafbfc', minHeight: '100vh' }}>
+    <div style={{ padding: 24, background: '#ffffff', minHeight: '100vh' }}>
       <ViewTools imgList={imgList} />
     </div>
   );

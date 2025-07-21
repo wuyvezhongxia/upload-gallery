@@ -19,10 +19,10 @@
       gap: 10px;
 
       button, .ant-btn {
-        width: 36px;
+        width: 80px; 
         height: 36px;
-        border-radius: 50%;
-        font-size: 15px;
+        border-radius: 18px;
+        font-size: 20px; // 将字体大小从15px调整为20px
         display: flex;
         align-items: center;
         justify-content: center;

@@ -164,8 +164,6 @@ export const useFileUpload = (config: any) => {
               : f
           )
         );
-
-        message.success(`图片压缩完成！压缩率: ${compressionRate}%`);
       } catch (error: any) {
         console.error("压缩过程出错,改用本地压缩", error);
 
