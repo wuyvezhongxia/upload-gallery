@@ -12,12 +12,14 @@ require('dotenv').config({
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const DEFAULT_PORT = 3001;
+const PORT = process.env.PORT || DEFAULT_PORT;
 
-// 获取当前环境的API URL
-const API_URL = process.env.VITE_TINYPNG_PROXY_URL || `http://localhost:${PORT}`;
+// 获取当前环境的API URL的基础部分
+const API_BASE_URL = process.env.VITE_API_BASE_URL || `http://localhost:${DEFAULT_PORT}`;
+const API_URL = `${API_BASE_URL}/api/tinypng/compress`;
 
-// 根据环境确定允许的前端域名 
+// 根据环境确定允许的前端域名
 const allowedOrigins = NODE_ENV === 'production' 
   ? ['http://192.168.10.8:5173', 'http://192.168.10.8:3000', 'http://192.168.10.8'] 
   : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost']; 

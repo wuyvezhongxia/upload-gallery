@@ -1,6 +1,9 @@
 import type { Plugin } from "vite";
 import axios from "axios";
 
+// 默认代理URL
+const DEFAULT_PROXY_URL = 'http://localhost:3001/api/tinypng/compress';
+
 // 客户端压缩选项接口
 export interface ClientCompressOptions {
   proxyUrl?: string;
@@ -49,7 +52,7 @@ const tinyPngStatus = TinyPngStatus.getInstance();
 // TinyPNG 压缩函数（通过代理服务器）
 export async function compressWithTinyPng(
   buffer: ArrayBuffer, 
-  proxyUrl: string = 'http://localhost:3001/api/tinypng/compress'
+  proxyUrl: string = process.env.VITE_TINYPNG_PROXY_URL || DEFAULT_PROXY_URL
 ): Promise<ArrayBuffer> {
   try {
     const response = await axios({
@@ -91,7 +94,7 @@ export async function compressImageFile(
   options: ClientCompressOptions = {}
 ): Promise<File> {
   const {
-    proxyUrl = 'http://localhost:3001/api/tinypng/compress',
+    proxyUrl = process.env.VITE_TINYPNG_PROXY_URL || DEFAULT_PROXY_URL,
     maxFileSize = 10 * 1024 * 1024,
     enableCache = true
   } = options;
@@ -184,12 +187,16 @@ export function getTinyPngStatus(): { quotaExhausted: boolean } {
 export function frontendCompressPlugin(options: any = {}): Plugin {
   return {
     name: 'vite:tinypng-compress',
-    config(config) {
+    config(config, env) {
       if (!config.define) {
         config.define = {};
       }
+      
+      // 尝试从环境变量获取，否则使用默认值或传入的选项
+      const proxyUrl = options.proxyUrl || process.env.VITE_TINYPNG_PROXY_URL || DEFAULT_PROXY_URL;
+      
       config.define.__TINYPNG_CONFIG__ = JSON.stringify({
-        proxyUrl: 'http://localhost:3001/api/tinypng/compress',
+        proxyUrl,
         ...options
       });
     }

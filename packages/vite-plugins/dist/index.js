@@ -1,5 +1,6 @@
 // src/uploadCompressPlugin.ts
 import axios from "axios";
+var DEFAULT_PROXY_URL = "http://localhost:3001/api/tinypng/compress";
 var TinyPngStatus = class _TinyPngStatus {
   static instance;
   quotaExhausted = false;
@@ -31,7 +32,7 @@ var TinyPngStatus = class _TinyPngStatus {
 };
 var compressionCache = /* @__PURE__ */ new Map();
 var tinyPngStatus = TinyPngStatus.getInstance();
-async function compressWithTinyPng(buffer, proxyUrl = "http://localhost:3001/api/tinypng/compress") {
+async function compressWithTinyPng(buffer, proxyUrl = process.env.VITE_TINYPNG_PROXY_URL || DEFAULT_PROXY_URL) {
   try {
     const response = await axios({
       method: "post",
@@ -64,7 +65,7 @@ async function compressWithTinyPng(buffer, proxyUrl = "http://localhost:3001/api
 }
 async function compressImageFile(file, options = {}) {
   const {
-    proxyUrl = "http://localhost:3001/api/tinypng/compress",
+    proxyUrl = process.env.VITE_TINYPNG_PROXY_URL || DEFAULT_PROXY_URL,
     maxFileSize = 10 * 1024 * 1024,
     enableCache = true
   } = options;
@@ -132,12 +133,13 @@ function getTinyPngStatus() {
 function frontendCompressPlugin(options = {}) {
   return {
     name: "vite:tinypng-compress",
-    config(config) {
+    config(config, env) {
       if (!config.define) {
         config.define = {};
       }
+      const proxyUrl = options.proxyUrl || process.env.VITE_TINYPNG_PROXY_URL || DEFAULT_PROXY_URL;
       config.define.__TINYPNG_CONFIG__ = JSON.stringify({
-        proxyUrl: "http://localhost:3001/api/tinypng/compress",
+        proxyUrl,
         ...options
       });
     }
