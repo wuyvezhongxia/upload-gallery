@@ -11,10 +11,12 @@ app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:3000'], // 允许的前端域名
   credentials: true
 }));
+// 解析二进制，并挂载道request.body
 app.use(express.raw({ 
   type: 'application/octet-stream', 
   limit: '50mb' 
 }));
+// 解析 JSON, 并挂载到request.body
 app.use(express.json());
 
 // TinyPNG 压缩代理接口
@@ -51,7 +53,7 @@ app.post('/api/tinypng/compress', async (req, res) => {
         maxBodyLength: Infinity
       });
       
-      // 返回压缩后的文件
+      // 返回结果给前端
       res.set({
         'Content-Type': 'application/octet-stream',
         'Content-Length': downloadResponse.data.byteLength,

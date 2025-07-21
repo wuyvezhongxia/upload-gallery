@@ -168,17 +168,19 @@ function isSupportedImageType(contentType: string): boolean {
   return supportedTypes.includes(contentType);
 }
 
-// 工具函数
+// 重置状态
 export function resetTinyPngStatus(): void {
   tinyPngStatus.reset();
 }
 
+// 获取状态
 export function getTinyPngStatus(): { quotaExhausted: boolean } {
   return {
     quotaExhausted: tinyPngStatus.isQuotaExhausted()
   };
 }
 
+// 前端压缩插件
 export function frontendCompressPlugin(options: any = {}): Plugin {
   return {
     name: 'vite:tinypng-compress',
