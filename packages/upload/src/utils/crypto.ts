@@ -19,13 +19,13 @@ export function unit8ArrayToHex(unit8Array: Uint8Array): string {
     .join("");
 }
 
-export async function computedHMAC_SHA256(
+export async function computedHMAC_SHA1(
   secret: string,
   value: string,
   resultType: "hex" | "base64" = "base64"
 ) {
   // 使用CryptoJS计算HMAC
-  const hash = CryptoJS.HmacSHA256(value, secret);
+  const hash = CryptoJS.HmacSHA1(value, secret);
 
   // 根据需要的结果类型返回
   if (resultType === "base64") {

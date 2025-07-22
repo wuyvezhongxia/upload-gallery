@@ -1,7 +1,7 @@
 import * as qiniu from 'qiniu-js'
 import {
     base64ToUrlSafe,
-  computedHMAC_SHA256,
+  computedHMAC_SHA1,
   urlSafeBase64Encode,
 } from "./crypto";
 import { getFileMd5Hash } from './stringUtil';
@@ -68,7 +68,7 @@ async function generateQiniuToken(accessKey: string,secretKey:string,bucket:stri
   };
   // 七牛云要求上传策略必须以 URL-Safe Base64 格式传递，这样才能在 HTTP 请求中安全传输，不会被 URL 编码破坏。
   const encodeFlags = urlSafeBase64Encode(JSON.stringify(flags));
-  const encoded = await computedHMAC_SHA256(secretKey, encodeFlags);
+  const encoded = await computedHMAC_SHA1(secretKey, encodeFlags);
   const encodeSign = base64ToUrlSafe(encoded);
   const uploadToken = `${accessKey}:${encodeSign}:${encodeFlags}`;
   return uploadToken;
