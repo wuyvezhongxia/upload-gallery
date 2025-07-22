@@ -1,28 +1,9 @@
-import { webcrypto } from "crypto";
+import CryptoJS from "crypto-js";
 
-// 获取正确的crypto对象
-function getCrypto() {
-  // 浏览器环境
-  if (typeof window !== 'undefined' && window.crypto) {
-    return window.crypto.subtle;
-  }
-  
-  // Node.js环境
-  return webcrypto.subtle;
-}
-// HMAC-SHA256密钥生成
+// HMAC-SHA256密钥生成 - 使用CryptoJS实现
 export const computedCryptoKeySHA1 = async (secret: string) => {
-  const encoder = new TextEncoder();
-  const keyMaterial = encoder.encode(secret);
-  const subtle = getCrypto();
-
-  return subtle.importKey(
-    "raw",
-    keyMaterial,
-    { name: "HMAC", hash: { name: "SHA-1" } },
-    false,
-    ["sign", "verify"]
-  );
+  // CryptoJS不需要显式生成密钥，直接在sign时使用
+  return secret; // 返回密钥字符串即可，后续直接使用
 };
 
 // ArrayBuffer与Base64转换
@@ -43,18 +24,15 @@ export async function computedHMAC_SHA256(
   value: string,
   resultType: "hex" | "base64" = "base64"
 ) {
-  const encoder = new TextEncoder();
-  const key = await computedCryptoKeySHA1(secret);
-  const data = encoder.encode(value);
-  const subtle = getCrypto();
-  const hashBuffer = await subtle.sign(
-    { name: "HMAC", hash: "SHA-256" },
-    key,
-    data
-  );
-  return resultType === "base64"
-    ? arrayBufferToBase64(hashBuffer)
-    : unit8ArrayToHex(new Uint8Array(hashBuffer));
+  // 使用CryptoJS计算HMAC
+  const hash = CryptoJS.HmacSHA256(value, secret);
+
+  // 根据需要的结果类型返回
+  if (resultType === "base64") {
+    return CryptoJS.enc.Base64.stringify(hash);
+  } else {
+    return hash.toString(CryptoJS.enc.Hex);
+  }
 }
 
 // 标准 Base64 → URL 安全的 Base64

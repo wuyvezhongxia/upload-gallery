@@ -13,11 +13,12 @@
   "dependencies": {
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@reduxjs/toolkit": "^2.8.2",
+    "@yuanjing/gallery": "workspace:*",
     "@yuanjing/shared": "workspace:*",
     "@yuanjing/tinypng-plugin": "workspace:*",
-    "@yuanjing/gallery": "workspace:*",
     "browser-image-compression": "^2.0.2",
     "compressorjs": "^1.2.1",
+    "crypto-js": "^4.2.0",
     "qiniu-js": "^3.4.2",
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",
