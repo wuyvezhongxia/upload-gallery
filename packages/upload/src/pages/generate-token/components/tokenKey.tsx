@@ -118,7 +118,7 @@ const TokenKey = (props:TokenKeyProps) => {
         >
           <Form.Item name="storage-service" label="存储服务">
             <Radio.Group>
-              <Radio>七牛云</Radio>
+              <Radio value="七牛云">七牛云</Radio>
             </Radio.Group>
           </Form.Item>
 
