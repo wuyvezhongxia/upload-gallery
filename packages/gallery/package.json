@@ -14,6 +14,7 @@
     "color-thief-react": "^2.1.0",
     "colorthief": "^2.6.0",
     "react-dom": "^19.1.0",
+    "@yuanjing/shared": "workspace:*",
     "react-lazy-load-image-component": "^1.6.3"
   },
   "devDependencies": {
