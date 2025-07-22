@@ -24,7 +24,7 @@ const FileList = () => {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("list");
 
   const onShowSizeChange: PaginationProps["onShowSizeChange"] = (
-    current,
+    _current,
     pageSize
   ) => {
     updateConfig({ pageSize });

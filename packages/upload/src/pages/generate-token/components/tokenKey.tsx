@@ -68,7 +68,7 @@ const TokenKey = (props:TokenKeyProps) => {
           };
     })
 
-    const onChange = (changedValues:FormValues, allValues:FormValues) => {
+    const onChange = (_changedValues:FormValues, allValues:FormValues) => {
       setFormValue(allValues);
     };
 
