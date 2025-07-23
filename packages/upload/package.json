@@ -15,7 +15,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@yuanjing/gallery": "workspace:*",
     "@yuanjing/shared": "workspace:*",
-    "@yuanjing/tinypng-plugin": "workspace:*",
+    "axios": "^1.6.0",
     "browser-image-compression": "^2.0.2",
     "compressorjs": "^1.2.1",
     "crypto-js": "^4.2.0",

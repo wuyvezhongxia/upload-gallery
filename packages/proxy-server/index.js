@@ -17,29 +17,31 @@ const PORT = process.env.PORT || DEFAULT_PORT;
 
 // 获取当前环境的API URL的基础部分
 const API_BASE_URL = process.env.VITE_API_BASE_URL || `http://localhost:${DEFAULT_PORT}`;
-const API_URL = `${API_BASE_URL}/api/tinypng/compress`;
 
 // 根据环境确定允许的前端域名
 const allowedOrigins = NODE_ENV === 'production' 
-  ? ['http://192.168.10.8:5173', 'http://192.168.10.8:3000', 'http://192.168.10.8'] 
-  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost']; 
+  ? ['http://192.168.10.8:5173', 'http://192.168.10.8:3000', 'http://192.168.10.8', '*'] 
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost', '*']; 
 
-// 中间件
+// 中间件 - 增强CORS配置，允许更多来源
 app.use(cors({
   origin: function(origin, callback) {
     // 允许没有origin的请求（如移动应用或Postman）
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))) {
+    if (allowedOrigins.includes('*') || allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))) {
       callback(null, true);
     } else {
+      console.warn(`CORS拒绝来自 ${origin} 的请求`);
       callback(new Error('不允许的跨域请求'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 解析二进制，并挂载道request.body
+// 解析二进制，并挂载到request.body
 app.use(express.raw({ 
   type: 'application/octet-stream', 
   limit: '50mb' 
@@ -47,14 +49,22 @@ app.use(express.raw({
 // 解析 JSON, 并挂载到request.body
 app.use(express.json());
 
-// TinyPNG 压缩代理接口
-app.post('/api/tinypng/compress', async (req, res) => {
+// 添加请求日志中间件
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// TinyPNG 压缩代理接口 - 同时支持两种路径格式
+app.post(['/api/tinypng/compress', '/tinypng/compress'], async (req, res) => {
+  console.log(`收到压缩请求，文件大小: ${req.body.length} 字节`);
   const maxRetries = 2;
   let retryCount = 0;
   
   const compressWithRetry = async () => {
     try {
       // 第一步：上传到 TinyPNG
+      console.log('正在上传到 TinyPNG...');
       const uploadResponse = await axios({
         method: 'post',
         url: 'https://api.tinify.com/shrink',
@@ -66,27 +76,36 @@ app.post('/api/tinypng/compress', async (req, res) => {
         headers: {
           'Content-Type': 'application/octet-stream'
         },
-        timeout: 60000, // 增加到60秒
+        timeout: 60000, // 60秒
         maxContentLength: Infinity,
         maxBodyLength: Infinity
       });
       
       // 第二步：下载压缩后的文件
+      console.log('上传成功，正在下载压缩后的文件...');
       const downloadResponse = await axios({
         method: 'get',
         url: uploadResponse.data.output.url,
         responseType: 'arraybuffer',
-        timeout: 60000, // 增加到60秒
+        timeout: 60000, // 60秒
         maxContentLength: Infinity,
         maxBodyLength: Infinity
       });
       
+      // 计算压缩率
+      const originalSize = req.body.length;
+      const compressedSize = downloadResponse.data.byteLength;
+      const compressionRate = ((originalSize - compressedSize) / originalSize * 100).toFixed(2);
+      
+      console.log(`压缩成功! 原始大小: ${originalSize} 字节, 压缩后: ${compressedSize} 字节, 压缩率: ${compressionRate}%`);
+      
       // 返回结果给前端
       res.set({
         'Content-Type': 'application/octet-stream',
-        'Content-Length': downloadResponse.data.byteLength,
-        'X-Original-Size': req.body.length,
-        'X-Compressed-Size': downloadResponse.data.byteLength
+        'Content-Length': compressedSize,
+        'X-Original-Size': originalSize,
+        'X-Compressed-Size': compressedSize,
+        'X-Compression-Rate': compressionRate
       });
       
       res.send(downloadResponse.data);
@@ -105,6 +124,7 @@ app.post('/api/tinypng/compress', async (req, res) => {
   try {
     await compressWithRetry();
   } catch (error) {
+    console.error('压缩失败:', error.message);
     
     // 检查错误类型
     if (error.response?.status === 429) {
@@ -142,8 +162,9 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 代理服务器启动成功: ${API_URL}`);
-  console.log(`📋 健康检查: ${API_URL}/health`);
+  console.log(`🚀 代理服务器启动成功，端口: ${PORT}`);
+  console.log(`📋 健康检查: ${API_BASE_URL}/health`);
   console.log(`🔑 API Key 状态:`, process.env.TINYPNG_API_KEY ? '已配置' : '未配置');
   console.log(`🌍 当前环境: ${NODE_ENV}`);
+  console.log(`🔗 压缩接口: ${API_BASE_URL}/api/tinypng/compress 或 ${API_BASE_URL}/tinypng/compress`);
 });

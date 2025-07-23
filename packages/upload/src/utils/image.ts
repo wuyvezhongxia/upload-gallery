@@ -4,11 +4,94 @@ import UPNG from 'upng-js'
 import type { CompressOptions } from "../types/compressOptions";
 import Compressor from "compressorjs";
 import { dataURLtoFile, calculateCompressionPercentage} from "./transform";
-import { compressImageFile, resetTinyPngStatus, getTinyPngStatus } from '@yuanjing/tinypng-plugin';
+import axios from 'axios'; // 添加axios导入
 
 // 扩展压缩选项接口，添加进度回调
 interface ExtendedCompressOptions extends CompressOptions {
     onProgress?: (percent: number, info?: string) => void;
+}
+
+// TinyPNG状态管理（简化版）
+const tinyPngStatus = {
+    quotaExhausted: false,
+    lastQuotaCheck: 0,
+    QUOTA_CHECK_INTERVAL: 60 * 60 * 1000, // 1小时重置检查
+    
+    isQuotaExhausted() {
+        const now = Date.now();
+        if (now - this.lastQuotaCheck > this.QUOTA_CHECK_INTERVAL) {
+            this.quotaExhausted = false;
+            this.lastQuotaCheck = now;
+        }
+        return this.quotaExhausted;
+    },
+    
+    markQuotaExhausted() {
+        this.quotaExhausted = true;
+        this.lastQuotaCheck = Date.now();
+    },
+    
+    reset() {
+        this.quotaExhausted = false;
+        this.lastQuotaCheck = 0;
+    }
+};
+
+// 直接调用Node服务进行TinyPNG压缩
+async function compressTinyPng(file: File): Promise<File> {
+    // 检查文件大小
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxFileSize) {
+        throw new Error(`文件大小超过限制: ${file.size} > ${maxFileSize}`);
+    }
+    
+    // 检查是否为支持的图片类型
+    const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!supportedTypes.includes(file.type)) {
+        throw new Error(`不支持的文件类型: ${file.type}`);
+    }
+    
+    // 检查配额状态
+    if (tinyPngStatus.isQuotaExhausted()) {
+        throw new Error('QUOTA_EXHAUSTED');
+    }
+    
+    try {
+        const buffer = await file.arrayBuffer();
+        
+        // 直接调用Node服务
+        const proxyUrl = import.meta.env.VITE_TINYPNG_PROXY_URL || 'http://localhost:3001/api/tinypng/compress';
+        
+        const response = await axios({
+            method: 'post',
+            url: proxyUrl,
+            data: buffer,
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            },
+            responseType: 'arraybuffer',
+            timeout: 90000, // 90秒超时
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
+        });
+        
+        // 创建压缩后的文件
+        return new File([response.data], file.name, { type: file.type });
+        
+    } catch (error: any) {
+        // 处理错误
+        if (error.response?.status === 429 || 
+            error.response?.data?.error === 'QUOTA_EXHAUSTED') {
+            tinyPngStatus.markQuotaExhausted();
+            throw new Error('QUOTA_EXHAUSTED');
+        } else if (error.response?.status === 401) {
+            throw new Error('INVALID_API_KEY');
+        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            throw new Error('TIMEOUT');
+        } else {
+            throw new Error(`TinyPNG_ERROR: ${error.message}`);
+        }
+    }
 }
 
 // 智能压缩函数 - 优先使用 TinyPNG，失败时回退到本地压缩
@@ -29,11 +112,8 @@ async function compressImage(file: File, ops: ExtendedCompressOptions = {}): Pro
                 }
             }, 300); 
             
-            const compressedFile = await compressImageFile(file, {
-                proxyUrl: import.meta.env.VITE_TINYPNG_PROXY_URL || 'http://localhost:3001/api/tinypng/compress',
-                maxFileSize: 10 * 1024 * 1024,
-                enableCache: true
-            });
+            // 使用新的直接调用函数替代插件
+            const compressedFile = await compressTinyPng(file);
             
             clearInterval(progressInterval);
             
@@ -55,7 +135,7 @@ async function compressImage(file: File, ops: ExtendedCompressOptions = {}): Pro
         }
     }
     
-    // 本地压缩逻辑
+    // 本地压缩逻辑（保持不变）
     onProgress?.(10, '开始本地压缩...');
     const result = await localCompress(file, { ...ops, onProgress });
     
@@ -239,9 +319,17 @@ export const localCompressOnly = localCompress;
 export { compressImage };
 
 // TinyPNG 状态管理
-export { getTinyPngStatus, resetTinyPngStatus };
+export function getTinyPngStatus(): { quotaExhausted: boolean } {
+    return {
+        quotaExhausted: tinyPngStatus.isQuotaExhausted()
+    };
+}
 
-// React Hook（可选）
+export function resetTinyPngStatus(): void {
+    tinyPngStatus.reset();
+}
+
+// React Hook
 export function useImageCompress() {
     return {
         compress: compressImage,

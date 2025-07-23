@@ -119,9 +119,9 @@ importers:
       '@yuanjing/shared':
         specifier: workspace:*
         version: link:../shared
-      '@yuanjing/tinypng-plugin':
-        specifier: workspace:*
-        version: link:../vite-plugins
+      axios:
+        specifier: ^1.6.0
+        version: 1.10.0
       browser-image-compression:
         specifier: ^2.0.2
         version: 2.0.2
@@ -740,8 +740,8 @@ packages:
   '@lokesh.dhakar/quantize@1.4.0':
     resolution: {integrity: sha512-+//cqVWKis//t0YH62EDtwaFSPG/CDtYNg4CZmzNmG2d5W17Iu3fuDAdpQXCDHUDrrU9q0veze4A7tPZXlR/mg==}
 
-  '@lokesh.dhakar/quantize@https://codeload.github.com/lokesh/quantize/tar.gz/270c6f81623c3247eed50ba37b9d74d79af7a267':
-    resolution: {tarball: https://codeload.github.com/lokesh/quantize/tar.gz/270c6f81623c3247eed50ba37b9d74d79af7a267}
+  '@lokesh.dhakar/quantize@git+https://git@github.com:lokesh/quantize.git#270c6f81623c3247eed50ba37b9d74d79af7a267':
+    resolution: {commit: 270c6f81623c3247eed50ba37b9d74d79af7a267, repo: git@github.com:lokesh/quantize.git, type: git}
     version: 1.4.0
 
   '@nodelib/fs.scandir@2.1.5':
@@ -3491,7 +3491,7 @@ snapshots:
 
   '@lokesh.dhakar/quantize@1.4.0': {}
 
-  '@lokesh.dhakar/quantize@https://codeload.github.com/lokesh/quantize/tar.gz/270c6f81623c3247eed50ba37b9d74d79af7a267': {}
+  '@lokesh.dhakar/quantize@git+https://git@github.com:lokesh/quantize.git#270c6f81623c3247eed50ba37b9d74d79af7a267': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -4131,7 +4131,7 @@ snapshots:
   colorthief@2.3.2:
     dependencies:
       get-pixels: 3.3.3
-      quantize: '@lokesh.dhakar/quantize@https://codeload.github.com/lokesh/quantize/tar.gz/270c6f81623c3247eed50ba37b9d74d79af7a267'
+      quantize: '@lokesh.dhakar/quantize@git+https://git@github.com:lokesh/quantize.git#270c6f81623c3247eed50ba37b9d74d79af7a267'
 
   colorthief@2.6.0:
     dependencies:

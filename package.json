@@ -6,8 +6,7 @@
   "scripts": {
     "dev:upload": "cd packages/upload && pnpm dev",
     "start:proxy": "cd packages/proxy-server && pnpm start",
-    "build:all": "pnpm build:plugins && pnpm build:shared && pnpm build:gallery && pnpm build:upload",
-    "build:plugins": "cd packages/vite-plugins && pnpm build",
+    "build:all": "pnpm build:shared && pnpm build:gallery && pnpm build:upload",
     "build:shared": "cd packages/shared && pnpm build",
     "build:gallery": "cd packages/gallery && pnpm build",
     "build:upload": "cd packages/upload && pnpm build"
