@@ -1,7 +1,7 @@
 import { CloudUploadOutlined } from "@ant-design/icons";
-import { Upload } from "antd";
+import { Upload, type UploadFile } from "antd";
 import "./index.scss";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useIsExpired } from "@/Hooks/isExpired";
 import { useUploadConfig } from "@/Hooks/upload";
 import { useFileUpload } from "@/Hooks/useFileUpload";
@@ -16,9 +16,53 @@ const UploadFile = () => {
   const { config } = useUploadConfig();
   const { fileList, addFileToQueue } = useFileUpload(config);
   const { pasteAreaRef } = usePasteHandler(isExpired, addFileToQueue, config);
+  const processedFiles = useRef(new Set<string>());
 
   const handleBeforeUpload = async (file: File) => {
     return await addFileToQueue(file, isExpired);
+  };
+
+  /**
+   * 处理批量上传
+   * @param files 文件列表
+   */
+  const handleBatchUpload = async (files: File[]) => {
+    if (files.length === 0) return;
+    
+    for (const file of files) {
+      await addFileToQueue(file, isExpired);
+    }
+  };
+  
+  /**
+   * 处理上传组件的 onChange 事件
+   * @param info 上传信息
+   */
+  const handleUploadChange = (info: any) => {
+    // 只在文件状态为 uploading 且有文件列表时处理批量上传
+    if (info.file.status === 'uploading' && info.fileList.length > 0) {
+      // 获取有效的文件对象
+      const validFiles = info.fileList
+        .filter((fileItem: any) => {
+          // 创建文件唯一标识（使用文件名和大小组合）
+          const fileId = `${fileItem.name}-${fileItem.size}`;
+          
+          // 如果文件已处理过，则跳过
+          if (processedFiles.current.has(fileId)) {
+            return false;
+          }
+          
+          // 标记文件为已处理
+          processedFiles.current.add(fileId);
+          return fileItem.originFileObj;
+        })
+        .map((fileItem: any) => fileItem.originFileObj)
+        .filter(Boolean);
+      
+      if (validFiles.length > 0) {
+        handleBatchUpload(validFiles);
+      }
+    }
   };
 
   const copyFile = () => {
@@ -40,7 +84,11 @@ const UploadFile = () => {
         readOnly
       />
 
-      <Dragger beforeUpload={handleBeforeUpload} showUploadList={false}>
+      <Dragger 
+        beforeUpload={handleBeforeUpload} 
+        showUploadList={false}
+        onChange={handleUploadChange}
+        multiple={true}>
         <p className="ant-upload-drag-icon">
           <CloudUploadOutlined />
         </p>
