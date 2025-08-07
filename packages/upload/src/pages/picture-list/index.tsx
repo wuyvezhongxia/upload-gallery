@@ -1,19 +1,22 @@
 import { Button, Pagination, ConfigProvider, Modal, Radio } from "antd";
 import type { PaginationProps, RadioChangeEvent } from "antd";
 import "./index.scss";
+import "./virtualList.css";
 import zhCN from "antd/locale/zh_CN";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { calculateCompressionPercentage, formatSize } from "@/utils/transform";
 import { fomatData, copyUrl, copyMd } from "@/utils/stringUtil";
 import type { ImageItem } from "@yuanjing/shared";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUploadConfig } from "@/Hooks/upload";
 import { AppstoreOutlined, BarsOutlined, UnorderedListOutlined } from "@ant-design/icons";
 import { ImageListView, ImageGridView } from "@yuanjing/gallery";
+import { FixedSizeList as List } from 'react-window';
+import { AutoSizer } from 'react-virtualized';
 
 // 定义显示模式类型
-type DisplayMode = "list" | "gallery-list" | "gallery-grid";
+type DisplayMode = "list" | "virtual-list" | "gallery-list" | "gallery-grid";
 
 const FileList = () => {
   const { imgList } = useSelector((state: RootState) => state.image);
@@ -22,6 +25,9 @@ const FileList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { config, updateConfig } = useUploadConfig();
   const [displayMode, setDisplayMode] = useState<DisplayMode>("list");
+  
+  // 创建虚拟列表的引用
+  const listRef = useRef<List>(null);
 
   const onShowSizeChange: PaginationProps["onShowSizeChange"] = (
     _current,
@@ -57,6 +63,37 @@ const FileList = () => {
     setDisplayMode(e.target.value);
   };
 
+  // 渲染虚拟列表的行
+  const renderRow = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const item = currentPageData[index];
+    return (
+      <div className="virtual-list-item" style={style}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="left">
+            <a href={item.url} target="_blank" rel="noopener noreferrer">
+              {item.name}
+            </a>
+          </span>
+          <span className="right">
+            <Button title="文件大小">{formatSize(item.size)}</Button>
+            <Button onClick={() => preview(item)} title="查看图片信息">
+              查看
+            </Button>
+            <Button onClick={() => onCopyUrl(item.url)} title="复制链接">
+              链接
+            </Button>
+            <Button
+              onClick={() => onCopyMd(item.url, item.name)}
+              title="复制Markdown格式"
+            >
+              MD
+            </Button>
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   // 渲染当前选择的显示模式内容
   const renderDisplayContent = () => {
     switch (displayMode) {
@@ -64,6 +101,25 @@ const FileList = () => {
         return <ImageListView imgList={currentPageData} />;
       case "gallery-grid":
         return <ImageGridView imgList={currentPageData} />;
+      case "virtual-list":
+        return (
+          <div className="virtual-list-container">
+            <AutoSizer>
+              {({ width, height }: { width: number; height: number }) => (
+                <List
+                  ref={listRef}
+                  width={width}
+                  height={height}
+                  itemCount={currentPageData.length}
+                  itemSize={70} // 每个列表项的高度
+                  overscanCount={5} // 预渲染的行数
+                >
+                  {renderRow}
+                </List>
+              )}
+            </AutoSizer>
+          </div>
+        );
       case "list":
       default:
         return (
@@ -112,6 +168,9 @@ const FileList = () => {
               <Radio.Group onChange={handleDisplayModeChange} value={displayMode}>
                 <Radio.Button value="list">
                   <UnorderedListOutlined /> 列表
+                </Radio.Button>
+                <Radio.Button value="virtual-list">
+                  <UnorderedListOutlined /> 虚拟列表
                 </Radio.Button>
                 <Radio.Button value="gallery-list">
                   <BarsOutlined /> 画廊列表
